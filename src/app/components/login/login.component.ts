@@ -49,12 +49,18 @@ export class LoginComponent {
     this.loginService.login(
       this.form?.get('email')?.value, 
       this.form?.get('password')?.value)
-      
       .subscribe({
         next: (res) => {
+          this.loginService.loggedUser = res;
           // token
-          this.router.navigate(['dashboard-deport']);
-          // llamar a un metodo del servicio que guarde el token en localstorage
+            const role = res.usuario.rol;
+            if (role === 'deportista') {
+            this.router.navigate(['dashboard-deport']);
+            } else if (role === 'administrador') {
+            this.router.navigate(['dashboard-admin']);
+            } else if (role === 'tecnico') {
+            this.router.navigate(['dashboard-tecnico']);
+            }          
           console.log(res);
         },
         error: (e) => {

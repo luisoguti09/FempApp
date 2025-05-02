@@ -10,6 +10,7 @@ export class LoginService {
 
   private apURL = environment.SERVER_API;
   private http = inject(HttpClient);
+  public loggedUser: any = null;
 
 
   public login(email: string, password: string): Observable<any>{
@@ -18,4 +19,5 @@ export class LoginService {
       password
     });
   }
+
 }

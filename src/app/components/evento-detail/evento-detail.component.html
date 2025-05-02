@@ -1,19 +1,51 @@
-<!--mat-card>
-    <mat-card-header>
-      <mat-card-title>Evento: {{ evento.nombre }}</mat-card-title>
-      <mat-card-subtitle>Fecha: {{ evento.fecha | date }}</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <p>Lugar: {{ evento.lugar }}</p>
-      <mat-table [dataSource]="evento.deportist">
-        </mat-table>
-      <canvas baseChart
-              [datasets]="chartData"
-              [labels]="chartLabels"
-              [options]="chartOptions"
-              [chartType]="chartType">
-      </canvas>
-    </mat-card-content>
-  </mat-card-->
-  {{ evento.nombre }}
-  {{ evento.lugar }}
+
+<div class="container">
+  <h2>Detalles del Evento</h2>
+  <p><strong>Nombre:</strong> {{ evento.nombre }}</p>
+  <p><strong>Lugar:</strong> {{ evento.lugar }}</p>
+  <p><strong>Descripción:</strong> {{ evento.descripcion }}</p>
+  <button mat-raised-button color="primary" (click)="volver()">Volver</button>
+</div>
+<div class="container">
+  <h2>Deportistas Inscritos</h2>
+  <table mat-table [dataSource]="deportistasInscritos" class="mat-elevation-z8">
+    <ng-container matColumnDef="nombre">
+      <th mat-header-cell *matHeaderCellDef>Nombre</th>
+      <td mat-cell *matCellDef="let deportista">{{ deportista.nombre }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="apellidoYNombre">
+      <th mat-header-cell *matHeaderCellDef>Apellido y Nombre</th>
+      <td mat-cell *matCellDef="let deportista">{{ deportista.apellidoYNombre }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+
+<div class="container">
+  <h2>Formulario de Inscripción</h2>
+  <form [formGroup]="form" (ngSubmit)="onSubmitInscripcion()">
+    <mat-form-field appearance="fill">
+      <mat-label>Evento</mat-label>
+      <mat-select formControlName="eventoId">
+        <mat-option *ngFor="let evento of eventos" [value]="evento.id">
+          {{ evento.nombre }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Deportista</mat-label>
+      <mat-select formControlName="deportistaId">
+        <mat-option *ngFor="let deportista of deportistas" [value]="deportista.id">
+          {{ deportista.nombre }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit">Inscribirse</button>
+  </form>
+</div>
+
+  

@@ -38,6 +38,12 @@ background: linear-gradient(90deg, rgba(2,70,206,1) 0%, rgba(132,162,223,1) 32%,
     }
   }
 
+  mat-card-description {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 16px;
+  }
+
   mat-card-subtitle {
     margin-top: 20px;
     font-size: 20px;
@@ -45,6 +51,8 @@ background: linear-gradient(90deg, rgba(2,70,206,1) 0%, rgba(132,162,223,1) 32%,
     align-items: center;
     flex-direction: column;
   }
+
+
 
   mat-card-content {
     padding: 16px;

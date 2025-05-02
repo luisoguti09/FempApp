@@ -1,0 +1,86 @@
+$primary-color: #0E32EF;
+$dark-color: #000000;
+
+.sidenav-container {
+  height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: #f1f1f1;
+  color: rgb(0, 0, 0);
+  mat-nav-list {
+    a {
+      color: white;
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+.main-gradient {
+  background: linear-gradient(135deg, $primary-color, $dark-color);
+  min-height: 100vh;
+  color: white;
+
+  mat-toolbar {
+    background-color: $primary-color;
+    color: white;
+    .spacer {
+      flex: 1 1 auto;
+    }
+  }
+
+  .content {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+
+    .profile-picture {
+      position: relative;
+      margin-bottom: 1rem;
+
+      img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 3px solid white;
+        object-fit: cover;
+      }
+
+      .edit-icon {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        background-color: white;
+        border-radius: 50%;
+        padding: 4px;
+        cursor: pointer;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+    }
+
+    .card-section {
+      width: 100%;
+      max-width: 600px;
+      background-color: rgba(255, 255, 255, 0.07);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
+
+      h2 {
+        margin-top: 0;
+        color: #ffffff;
+      }
+    }
+  }
+}
+
+

@@ -81,7 +81,7 @@ export class RegistroComponent {
   }
 
   guardar() {
-    if (!this.empadronada) {
+    if (this.empadronada == "NO_EMPADRONADA") {
       this.regServ.guardar(
         this.form?.get('nombre')?.value,
         this.form?.get('edad')?.value,
@@ -95,6 +95,7 @@ export class RegistroComponent {
           //this.router.navigate(['dashboard-deport']);
           // llamar a un metodo del servicio que guarde el token en localstorage
           console.log(res);
+          this.router.navigate(['dashboard-deport']);
         },
         error: (e) => {
           //mostrar mensaje de error sacandolo de error
