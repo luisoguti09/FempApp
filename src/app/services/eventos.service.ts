@@ -31,30 +31,34 @@ export class EventosService {
   }
 
   addEvento(evento: Evento): Observable<Evento> {
-    return this.http.post<Evento>(`${this.apURL}/evento`, evento);
+    return this.http.post<Evento>(`${this.apURL}/eventos`, evento);
   } 
 
   updateEvento(evento: Evento): Observable<Evento> {
-    return this.http.put<Evento>(`${this.apURL}/evento`, evento);
+    return this.http.put<Evento>(`${this.apURL}/eventos`, evento);
   }
 
   deleteEvento(id: number): Observable<Evento> {
-    return this.http.delete<Evento>(`${this.apURL}/evento/${id}`);
+    return this.http.delete<Evento>(`${this.apURL}/eventos/${id}`);
   }
 
-  inscribirDeportista(eventoId: number, deportistaId: number): Observable<any> {
-    const payload = { eventoId, deportistaId };
-    return this.http.post<any>(`${this.apURL}/evento/inscribir`, payload)
-      .pipe(
-        tap(response => {
-          console.log('Te has inscripto con éxito:', response);
-        }),
-        catchError(error => {
-          console.error('Error al inscribirte:', error);
-          return of(null);  
-        })
-      );
-  }
+  inscribirDeportista(eventoId: number, usuarioId: number): Observable<any> {
+  const payload = { usuarioId };
+  return this.http.post<any>(`${this.apURL}/eventos/${eventoId}/inscribir`, payload);
+}
+
+getEventosDelUsuario(usuarioDni: number): Observable<Evento[]> {
+  return this.http.get<Evento[]>(`${this.apURL}/usuarios/${usuarioDni}/eventos`);
+}
+
+
+getEventosDelPatinador(dni: string): Observable<Evento[]> {
+  return this.http.get<Evento[]>(`${this.apURL}/usuarios/${dni}/eventos`);
+}
+
+getDeportistasInscriptos(eventoId: number) {
+  return this.http.get<any[]>(`${this.apURL}/${eventoId}/usuarios`);
+}
 
   
 

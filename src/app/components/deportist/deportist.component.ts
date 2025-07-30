@@ -58,7 +58,6 @@ export class DeportistComponent implements OnInit {
       this.regServ.buscar(this.logServ.loggedUser.usuario.dni)
         .subscribe((res: any) => {
           this.pers = res;
-          
         });
   }
 

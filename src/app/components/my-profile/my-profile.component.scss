@@ -1,0 +1,194 @@
+/* Labels y texto blanco */
+::ng-deep .mat-mdc-text-field-wrapper {
+  color: white !important;
+}
+
+::ng-deep .mat-mdc-floating-label,
+::ng-deep .mat-mdc-form-field-label {
+  color: #ffffff !important;
+  font-weight: 500;
+}
+
+/* Bordes de inputs más sutiles */
+::ng-deep .mat-mdc-form-field-outline {
+  stroke: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Fondo transparente */
+::ng-deep .mat-mdc-form-field {
+  background: transparent !important;
+}
+
+/* Evitar que se alarguen o se separen los inputs */
+.full-width {
+  width: 100%;
+  margin-bottom: 0.7rem;
+}
+
+.avatar-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+
+  .edit-avatar-btn {
+    position: absolute;
+    bottom: 5px;
+    right: calc(50% - 50px);
+    background-color: white;
+    color: #0E32EF;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+}
+
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid white;
+  background-color: #fff; // por si no carga la imagen
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+
+
+
+.profile-container {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+
+  h2 {
+    margin-bottom: 1rem;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* === Avatar === */
+  .avatar-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: -40px; 
+    z-index: 2;
+
+    .avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: 3px solid white;
+      object-fit: cover;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      background: white;
+    }
+  }
+
+  .profile-card, .eventos-card {
+    width: 100%;
+    max-width: 600px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(5px);
+    border-radius: 15px;
+    padding: 2rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    color: white;
+    margin-top: 40px;
+
+    mat-form-field {
+      width: 100%;
+      color: white;
+
+      .mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-floating-label {
+    color: #ffffff;
+}
+.mdc-text-field--outlined:not(.mdc-text-field--disabled) .mdc-floating-label {
+    color: #fbfcff;
+}
+
+      input {
+        color: white;
+      }
+    }
+  }
+
+  .btn-container {
+    text-align: right;
+    margin-top: 1rem;
+
+    button {
+      border-radius: 15px;
+      background: linear-gradient(135deg, #0E32EF, #000);
+      color: white;
+      font-weight: bold;
+    }
+  }
+
+  /* === Eventos === */
+  .eventos-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .evento-card {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 1rem;
+    color: white;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+
+    mat-card-title {
+      color: white;
+      font-weight: bold;
+    }
+
+    mat-card-subtitle {
+      color: #ddd;
+    }
+
+    &:hover {
+      transform: scale(1.03);
+      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+/* === Forzar textos y labels a blanco para mejor contraste === */
+.profile-card, .eventos-card {
+  color: #fff !important;
+
+  mat-form-field {
+    color: #fff !important;
+
+    .mat-label, label, input, textarea {
+      color: #fff !important;
+    }
+
+    .mat-hint, .mat-placeholder {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .mat-form-field-outline {
+      stroke: rgba(255, 255, 255, 0.6) !important;
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+  }
+}
+
+/* Botón más visible */
+.btn-container button {
+  background: linear-gradient(135deg, #0E32EF, #000) !important;
+  color: #fff !important;
+  font-weight: bold;
+  border: 1px solid rgb(255, 255, 255);
+}
+

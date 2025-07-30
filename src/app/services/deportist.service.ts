@@ -31,7 +31,7 @@ export class DeportistService {
   }
 
   buscarDni(dni: string) {
-    return this.http.get(`${this.apURL}/padron/${dni}`);
+    return this.http.get(`${this.apURL}/usuarios/${dni}`);
   }
 
   addDeportist(deportist: Deportist): Observable<Deportist> {
@@ -50,9 +50,10 @@ export class DeportistService {
     return this.http.get<Deportist[]>(`${this.apURL}/padron?id=${id}`);
   }
 
-  getDeportistByDni(dni: string): Observable<Deportist[]> {
-    return this.http.get<Deportist[]>(`${this.apURL}/padron?dni=${dni}`);
-  }
+ getDeportistByDni(dni: string): Observable<Deportist[]> {
+  return this.http.get<Deportist[]>(`${this.apURL}/padron?dni=${dni}`);
+}
+
 
   getDeportistByNombre(nombre: string): Observable<Deportist[]> {
     return this.http.get<Deportist[]>(`${this.apURL}/padron?nombre=${nombre}`);
@@ -62,37 +63,46 @@ export class DeportistService {
     return this.http.get<Deportist[]>(`${this.apURL}/padron?apellidos=${apellidos}`);
   }
 
-  subirFotoPerfil(id: number, formData: FormData): Observable<any> {
-    return this.http.post(`${this.apURL}/padron/${id}/upload`, formData)
-      .pipe(
-        tap(response => {
-          console.log('Foto de perfil cargada:', response);
-        }),
-        catchError(error => {
-          console.error('Error al cargar la foto de perfil:', error);
-          return of(null);
-        })
-      );
-  }
-
-  obtenerFotoPerfil(id: number): Observable<any> {
-    return this.http.get(`${this.apURL}/padron/${id}/profile-picture`);
-  }
-
-  eliminarFotoPerfil(id: number): Observable<any> {
-    return this.http.delete(`${this.apURL}/padron/${id}/profile-picture`)
-      .pipe(
-        tap(response => {
-          console.log('Foto de perfil eliminada:', response);
-        }),
-        catchError(error => {
-          console.error('Error al eliminar la foto de perfil:', error);
-          return of(null);
-        })
-      );
-  }
-
-
-
-
+ subirFotoPerfil(dni: string, formData: FormData): Observable<any> {
+  return this.http.post(`${this.apURL}/usuarios/${dni}/fotoPerfil`, formData)
+    .pipe(
+      tap(response => {
+        console.log('Foto de perfil cargada:', response);
+      }),
+      catchError(error => {
+        console.error('Error al cargar la foto de perfil:', error);
+        return of(null);
+      })
+    );
 }
+
+obtenerFotoPerfil(dni: string): Observable<any> {
+  return this.http.get(`${this.apURL}/usuarios/${dni}/fotoPerfil`, { responseType: 'blob' });
+}
+
+eliminarFotoPerfil(dni: string): Observable<any> {
+  return this.http.delete(`${this.apURL}/usuarios/${dni}/fotoPerfil`)
+    .pipe(
+      tap(response => {
+        console.log('Foto de perfil eliminada:', response);
+      }),
+      catchError(error => {
+        console.error('Error al eliminar la foto de perfil:', error);
+        return of(null);
+      })
+    );
+}
+  evaluarElemento(data: any): Observable<any> {
+    return this.http.post(`${this.apURL}/evaluaciones`, data).pipe(
+      catchError(err => {
+        console.error('Error al registrar evaluación', err);
+        return of(null);
+      })
+    );
+  }
+
+  getAll(): Observable<Deportist[]> {
+    return this.getDeportistas();
+  }
+} 
+

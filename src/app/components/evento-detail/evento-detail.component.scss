@@ -1,0 +1,68 @@
+$primary-color: #0E32EF;
+$dark-color: #000000;
+
+.main-gradient {
+  background: linear-gradient(135deg, $primary-color, $dark-color);
+  min-height: 100vh;
+  color: white;
+
+  mat-toolbar {
+    background-color: $primary-color;
+    color: white;
+
+    .spacer {
+      flex: 1 1 auto;
+    }
+  }
+
+  .content {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+
+    .card-section {
+      width: 100%;
+      max-width: 800px;
+      background-color: rgba(255, 255, 255, 0.07);
+      color: white;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+
+      h2 {
+        margin-top: 0;
+        color: #ffffff;
+        font-weight: 600;
+      }
+
+      .full-width {
+        width: 100%;
+      }
+
+      .full-width-table {
+        width: 100%;
+        color: white;
+
+        th, td {
+          color: white;
+        }
+
+        mat-header-row, mat-row {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+      }
+
+      button {
+        margin-top: 1rem;
+      }
+    }
+  }
+
+  .custom-dialog-panel .mat-dialog-container {
+  background: transparent;
+  box-shadow: none;
+}
+
+}

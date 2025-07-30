@@ -1,0 +1,111 @@
+<div class="profile-container">
+
+  <!-- Avatar centrado -->
+  <div class="avatar-container">
+    <img [src]="usuario?.fotoPerfil || 'assets/img/default-profile.jpg'" alt="Foto de perfil" class="avatar">
+     <!--<button mat-mini-fab color="accent" class="edit-avatar-btn" (click)="cambiarFotoPerfil()">
+    <mat-icon>edit</mat-icon>
+  </button>
+  <input type="file" id="fileInput" (change)="onFileSelected($event)" hidden>-->
+  </div>
+
+  <!-- Card Mis Datos -->
+  <mat-card class="profile-card">
+    <h2>Mis Datos</h2>
+
+    <form [formGroup]="form" (ngSubmit)="guardar()">
+      <div class="form-grid">
+        
+        <!-- Campos no editables -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" readonly />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>DNI</mat-label>
+          <input matInput formControlName="dni" readonly />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre" readonly />
+        </mat-form-field>
+
+        <!-- Campos editables -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Club</mat-label>
+          <input matInput formControlName="club" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Categoría</mat-label>
+          <input matInput formControlName="categoria" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nivel</mat-label>
+          <input matInput formControlName="nivel" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Domicilio</mat-label>
+          <input matInput formControlName="domicilio" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Teléfono</mat-label>
+          <input matInput formControlName="telefono" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Fecha de Nacimiento</mat-label>
+          <input matInput formControlName="fechaNacimiento" type="date" />
+        </mat-form-field>
+
+        <!-- Redes Sociales -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Instagram</mat-label>
+          <input matInput formControlName="instagram" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Facebook</mat-label>
+          <input matInput formControlName="facebook" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>TikTok</mat-label>
+          <input matInput formControlName="tiktok" />
+        </mat-form-field>
+
+      </div>
+
+      <div class="btn-container">
+        <button mat-flat-button color="primary" type="submit">Guardar Cambios</button>
+      </div>
+    </form>
+  </mat-card>
+
+  <mat-divider class="divider-mis-eventos"></mat-divider>
+
+  <!-- Card Eventos Inscriptos -->
+  <mat-card class="eventos-card">
+    <h2>Eventos Inscriptos</h2>
+    <div class="eventos-grid" *ngIf="eventosInscritos.length > 0; else noEventos">
+      <mat-card *ngFor="let evento of eventosInscritos" class="evento-card">
+        <mat-card-title>{{ evento.nombre }}</mat-card-title>
+        <mat-card-subtitle>{{ evento.fecha | date:'dd/MM/yyyy' }}</mat-card-subtitle>
+        <mat-card-content>
+          <p><strong>Lugar:</strong> {{ evento.lugar || 'No especificado' }}</p>
+          <p>{{ evento.descripcion || 'Sin descripción' }}</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </mat-card>
+
+  <ng-template #noEventos>
+    <p>No estás inscripto en ningún evento.</p>
+  </ng-template>
+
+</div>

@@ -1,9 +1,21 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, catchError, of } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ElementosService {
+  private http = inject(HttpClient);
+  private apiUrl = environment.SERVER_API;
 
-  constructor() { }
+  getElementos(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/elementos`).pipe(
+      catchError((err) => {
+        console.error('Error al obtener elementos técnicos', err);
+        return of([]);
+      })
+    );
+  }
 }

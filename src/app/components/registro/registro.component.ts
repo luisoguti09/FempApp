@@ -10,6 +10,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
 import { CommonModule } from '@angular/common';
 import { RegistroFastComponent } from '../registro-fast/registro-fast.component';
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 
 @Component({
@@ -27,7 +29,9 @@ import { RegistroFastComponent } from '../registro-fast/registro-fast.component'
     RouterLink,
     MatListModule,
     MatDividerModule,
-    RegistroFastComponent
+    RegistroFastComponent,
+    MatSelectModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './registro.component.html',
   styleUrl: './registro.component.scss'
@@ -42,16 +46,27 @@ export class RegistroComponent {
   private regServ = inject(RegistroService);
   public empadronada: string = "";
   public pers: any;
+  public roles: any[] = [];
+  public errorMsg: string = '';
+  public successMsg: string = '';
+  public cargando: boolean = false;
+
+
 
   ngOnInit() {
     this.form = this.fb.group({
       nombre: new FormControl('', [Validators.required]),
       edad: new FormControl(0),
-      nivel: new FormControl('', [Validators.required]),
       email: new FormControl('', [Validators.required, Validators.email]),
       password: new FormControl('', [Validators.required]),
       confirmPass: new FormControl('', [Validators.required]),
-      dni: new FormControl('', [Validators.required])
+      dni: new FormControl('', [Validators.required]),
+      rolId: new FormControl(null, [Validators.required])
+    });
+
+    this.regServ.getRoles().subscribe({
+      next: res => this.roles = res,
+      error: err => console.log('Error al obtener roles', err)
     });
 
   }
@@ -81,6 +96,57 @@ export class RegistroComponent {
   }
 
   guardar() {
+  this.errorMsg = '';
+  this.successMsg = '';
+  this.cargando = true;
+
+  const esEmpadronada = this.empadronada !== 'NO_EMPADRONADA';
+
+  const datos = {
+    nombre: esEmpadronada ? this.pers?.apellidoYNombre : this.form.get('nombre')?.value,
+    edad: esEmpadronada ? 14 : this.form.get('edad')?.value,
+    email: this.form.get('email')?.value,
+    password: this.form.get('password')?.value,
+    dni: esEmpadronada ? this.pers?.documentoN : this.form.get('dni')?.value,
+    rolId: this.form.get('rolId')?.value
+  };
+
+  console.log('📤 Datos a enviar en registro:', datos);
+
+  this.regServ.guardar(
+    datos.nombre,
+    datos.edad,
+    datos.email,
+    datos.password,
+    datos.dni,
+    datos.rolId
+  ).subscribe({
+    next: (res) => {
+      this.successMsg = 'Registro exitoso. Serás redirigido al login.';
+      this.cargando = false;
+
+      setTimeout(() => {
+        this.successMsg = '';
+        this.router.navigate(['']); 
+      }, 2000);
+    },
+    error: (e) => {
+      this.cargando = false;
+      const mensaje = e?.error?.error || 'Ocurrió un error al registrar.';
+      this.errorMsg = mensaje;
+      console.error(mensaje);
+
+      setTimeout(() => {
+        this.errorMsg = '';
+      }, 3000);
+    }
+  });
+}
+
+
+
+
+  /*guardar() {
     if (this.empadronada == "NO_EMPADRONADA") {
       this.regServ.guardar(
         this.form?.get('nombre')?.value,
@@ -88,7 +154,8 @@ export class RegistroComponent {
         this.form?.get('nivel')?.value,
         this.form?.get('email')?.value,
         this.form?.get('password')?.value,
-        this.form?.get('dni')?.value,
+        this.pers?.documentoN || this.form?.get('dni')?.value,
+        this.form?.get('rolId')?.value
       ).subscribe({
         next: (res) => {
           // token
@@ -103,7 +170,30 @@ export class RegistroComponent {
         }
       });
     }
-  }
+    else {
+      this.regServ.guardar(
+        this.pers.apellidoYNombre,
+        14,
+        this.pers.categoria,
+        this.form?.get('email')?.value,
+        this.form?.get('password')?.value,
+        this.pers?.documentoN || this.form?.get('dni')?.value,
+        this.form?.get('rolId')?.value
+      ).subscribe({
+        next: (res) => {
+          // token
+          //this.router.navigate(['dashboard-deport']);
+          // llamar a un metodo del servicio que guarde el token en localstorage
+          console.log(res);
+          this.router.navigate(['dashboard-deport']);
+        },
+        error: (e) => {
+          //mostrar mensaje de error sacandolo de error
+          console.log(e.error.error);
+        }
+      });
+    }
+  }*/
 
 
 

@@ -9,9 +9,11 @@ $dark-color: #000000;
   width: 220px;
   background-color: #f1f1f1;
   color: rgb(0, 0, 0);
+
   mat-nav-list {
     a {
       color: white;
+
       mat-icon {
         margin-right: 8px;
       }
@@ -27,6 +29,7 @@ $dark-color: #000000;
   mat-toolbar {
     background-color: $primary-color;
     color: white;
+
     .spacer {
       flex: 1 1 auto;
     }
@@ -37,7 +40,7 @@ $dark-color: #000000;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2rem;
+    gap: 3rem;
 
     .profile-picture {
       position: relative;
@@ -58,10 +61,12 @@ $dark-color: #000000;
         background-color: white;
         border-radius: 50%;
         padding: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        color: $primary-color;
         cursor: pointer;
       }
 
-      input[type="file"] {
+      input[type='file'] {
         display: none;
       }
     }
@@ -69,18 +74,89 @@ $dark-color: #000000;
     .card-section {
       width: 100%;
       max-width: 600px;
+      overflow: visible;
+      max-height: none;
       background-color: rgba(255, 255, 255, 0.07);
       color: white;
       padding: 1.5rem;
+      margin-bottom: 2rem;
       border-radius: 12px;
-      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+
+      .card-section mat-list {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-height: none;
+        overflow: visible;
+      }
 
       h2 {
         margin-top: 0;
-        color: #ffffff;
+        margin-bottom: 1rem;
+        color: white;
+      }
+
+      table.mat-table {
+        background-color: transparent;
+        color: white;
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 1rem;
+
+        th.mat-header-cell,
+        td.mat-cell {
+          background-color: transparent;
+          color: white;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+          padding: 12px;
+        }
+
+        th.mat-header-cell {
+          font-weight: bold;
+        }
+
+        tr.mat-header-row {
+          border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        tr.mat-row:hover {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        button {
+          color: white;
+          font-weight: bold;
+        }
+      }
+
+      // Otros estilos anteriores aquí...
+
+      .card-section mat-list-item {
+        display: flex;
+        align-items: flex-start;
+        flex-direction: row;
+        padding: 10px 0;
+        gap: 8px;
+
+        .mat-line-container {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          color: white;
+          word-break: break-word;
+          white-space: normal;
+        }
+
+        .mat-line {
+          line-height: 1.4;
+        }
+
+        .secondary {
+          font-size: 0.85rem;
+          color: #ccc;
+        }
       }
     }
   }
 }
-
-

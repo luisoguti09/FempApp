@@ -11,31 +11,43 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatDialog } from '@angular/material/dialog';
 
+
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { DialogsComponent } from '../dialogs/dialogs.component';
+import { LoginService } from '../../services/login.service';
+// import { showAthleteRegistro } from '../dialogs/dialogs.component';
 
 @Component({
   selector: 'app-evento-detail',
   standalone: true,
   imports: [
+    CommonModule,
     MatFormFieldModule,
-    MatTableModule, 
-    MatButtonModule, 
+    MatTableModule,
+    MatButtonModule,
     MatIconModule,
     MatInputModule,
-    RouterLink, 
+    RouterLink,
     RouterOutlet,
-    FormsModule, 
+    FormsModule,
     ReactiveFormsModule,
-    MatCardModule, 
-    MatSelectModule
+    MatCardModule,
+    MatSelectModule,
+    MatToolbarModule,
+
   ],
   templateUrl: './evento-detail.component.html',
-  styleUrl: './evento-detail.component.scss'
+  styleUrl: './evento-detail.component.scss',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class EventoDetailComponent implements OnInit {
-  
+
   public evento!: Evento;
-  private router = inject (Router);
+  private router = inject(Router);
   private fb = inject(FormBuilder);
   private eventServ = inject(EventosService);
   //public chartType: ChartType = 'bar'; // o 'line', 'pie', etc.
@@ -45,22 +57,36 @@ export class EventoDetailComponent implements OnInit {
   public form!: FormGroup;
   public displayedColumns: string[] = ['id', 'nombre', 'fecha', 'hora', 'lugar', 'acciones'];
   public deportistasInscritos: any[] = [];
-
+  public eventos: Evento[] = [];
+  public deportistas: any[] = [];
+  injectedRoute = inject(ActivatedRoute);
+  private logServ = inject(LoginService);
+  private matDialog = inject(MatDialog);
   constructor() { }
 
+
+
   ngOnInit(): void {
-    this.mostrarEventoById(1);
-    this.formularioInscripcion();
+    this.injectedRoute.params.subscribe(params => {
+      this.mostrarEventoById(params['evento']);
+      this.formularioInscripcion();
+    });
+    this.mostrarTodosEventos();
+    this.getDeportistasInscritos(this.evento?.id);
+
   }
 
-  mostrarEventoById(id: number){
+  mostrarEventoById(id: number) {
+    console.log(id, 'hola esta prueba de console');
+
     this.eventServ.getEventoById(id).subscribe({
-      next: (evento: any) => {
-      this.evento = evento[0];
-      console.log(this.evento);
+      next: (eventos: any) => {
+        this.evento = eventos.find((evento: Evento) => evento.id == id);
+        this.getDeportistasInscritos(this.evento.id);
+        console.log(this.evento);
       },
       error: (error: any) => {
-      console.error('Error fetching event:', error);
+        console.error('Error fetching event:', error);
       }
     });
   }
@@ -68,13 +94,14 @@ export class EventoDetailComponent implements OnInit {
   mostrarTodosEventos() {
     this.eventServ.getEventos().subscribe({
       next: (eventos: Evento[]) => {
-        console.log(eventos);
+        this.eventos = eventos;
       },
       error: (error: any) => {
         console.error('Error fetching events:', error);
       }
     });
   }
+
   crearEvento() {
     this.evento.fechaInscripcion = new Date();
     this.eventServ.addEvento(this.evento).subscribe({
@@ -98,16 +125,61 @@ export class EventoDetailComponent implements OnInit {
     });
   }
 
-  inscribirseEvento(eventoId: number, deportistaId: number) {
-    this.eventServ.inscribirDeportista(eventoId, deportistaId).subscribe({
-      next: (response: any) => {
-        console.log('Te has inscripto al evento:', response);
+  verDetalleEvento(id: number) {
+    this.router.navigate(['/evento-detail', id]);
+  }
+
+
+  // Método para inscribirse a un evento
+
+  /*inscribirseEvento(eventoId: number, deportistaId: number) {
+  this.eventServ.inscribirDeportista(eventoId, deportistaId).subscribe({
+    next: (response: any) => {
+      this.matDialog.open(DialogsComponent, {
+        data: { success: true }
+      });
+      this.router.navigate(['/dashboard-deport']);
+    },
+    error: (error: any) => {
+      console.error('Error al inscribirte al evento:', error);
+      this.matDialog.open(DialogsComponent, {
+        data: { success: false }
+      });
+      this.router.navigate(['/dashboard-deport']);
+    }
+  });
+}*/
+
+  inscribirseEvento() {
+    const usuario = this.logServ.loggedUser?.usuario;
+    const yaInscripto = this.deportistasInscritos.some(dep => dep.id === usuario.id);
+    if (yaInscripto) {
+      this.abrirDialogo(false);
+      return;
+    }
+    this.eventServ.inscribirDeportista(this.evento.id, usuario.id).subscribe({
+      next: () => {
+        this.abrirDialogo(true);
       },
-      error: (error: any) => {
-        console.error('Error al inscribirte al evento:', error);
+      error: () => {
+        this.abrirDialogo(false);
       }
     });
   }
+
+  abrirDialogo(success: boolean): void {
+    this.matDialog.open(DialogsComponent, {
+      data: { success },
+      panelClass: 'custom-dialog-panel'
+    });
+
+    setTimeout(() => {
+      this.matDialog.closeAll();
+      this.router.navigate(['/dashboard-deport']);
+    }, 3000);
+  }
+
+
 
   eliminarEvento(id: number) {
     this.eventServ.deleteEvento(id).subscribe({
@@ -132,15 +204,10 @@ export class EventoDetailComponent implements OnInit {
   }
 
   onSubmitInscripcion() {
-    if (this.form.valid) {
-      const { eventoId, deportistaId } = this.form.value;
-      this.inscribirseEvento(eventoId, deportistaId);
-    } else {
-      console.error('Formulario inválido');
-    }
+    this.inscribirseEvento();
   }
 
-  getDeportistasInscritos(eventoId: number) {
+  /*getDeportistasInscritos(eventoId: number) {
     this.eventServ.getEventoById(eventoId).subscribe({
       next: (evento: any) => {
         this.deportistasInscritos = evento[0].deportistas;
@@ -150,8 +217,19 @@ export class EventoDetailComponent implements OnInit {
         console.error('Error fetching event:', error);
       }
     });
+  }*/
+
+  getDeportistasInscritos(eventoId: number) {
+    this.eventServ.getDeportistasInscriptos(eventoId).subscribe({
+      next: (usuarios: any[]) => {
+        this.deportistasInscritos = usuarios;
+        console.log('Inscriptos:', usuarios);
+      },
+      error: (error: any) => {
+        console.error('Error obteniendo inscriptos:', error);
+      }
+    });
   }
 
 
-  
 }
