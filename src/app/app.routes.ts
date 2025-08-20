@@ -18,9 +18,9 @@ import { noAuthGuard } from './guards/no-auth.guard';
 
 export const routes: Routes = [
 
-  { path: 'login', component: LoginComponent}, // canActivate: [noAuthGuard] },
-  { path: 'registro', component: RegistroComponent}, // canActivate: [noAuthGuard] },
-  { path: 'registroFast', component: RegistroFastComponent}, // canActivate: [noAuthGuard] },
+  { path: 'login', component: LoginComponent }, // canActivate: [noAuthGuard] },
+  { path: 'registro', component: RegistroComponent }, // canActivate: [noAuthGuard] },
+  { path: 'registroFast', component: RegistroFastComponent }, // canActivate: [noAuthGuard] },
 
   { path: 'deportist', component: DeportistComponent },
   { path: 'evento-detail/:evento', component: EventoDetailComponent },
@@ -28,20 +28,29 @@ export const routes: Routes = [
   { path: 'dialogs', component: DialogsComponent },
   { path: 'usuarios', component: UsuariosComponent },
   { path: 'documentacion', component: DocumentacionComponent },
-
   { path: 'test', component: LoginComponent },
+  {path: 'dashboard-deport',
+    component: DashboardDeportComponent,
+    children: [
 
-  { path: 'dashboard-deport', component: DashboardDeportComponent,
-  children: [
-    {
-      path: 'mis-datos',
-      loadComponent: () =>
-        import('./components/my-profile/my-profile.component').then(m => m.MyProfileComponent)
-    }
-  ]}, // canActivate: [authGuard] },
-  { path: 'dashboard-admin', component: DashboardAdminComponent}, // canActivate: [authGuard] },
-  { path: 'dashboard-tecnico', component: DashboardTecnicoComponent}, // canActivate: [authGuard] },
-  { path: 'dashboard-prof', component: DashboardProfComponent}, // canActivate: [authGuard] },
+      {
+        path: 'mis-datos',
+        loadComponent: () =>
+          import('./components/my-profile/my-profile.component')
+            .then(m => m.MyProfileComponent)
+      },
+      {
+        path: 'mis-eventos',
+        loadComponent: () =>
+          import('./components/evento-detail/evento-detail.component')
+            .then(m => m.EventoDetailComponent),
+        data: { mode: 'disponibles' }
+      }
+    ]
+  }, // canActivate: [authGuard] },
+  { path: 'dashboard-admin', component: DashboardAdminComponent }, // canActivate: [authGuard] },
+  { path: 'dashboard-tecnico', component: DashboardTecnicoComponent }, // canActivate: [authGuard] },
+  { path: 'dashboard-prof', component: DashboardProfComponent }, // canActivate: [authGuard] },
   // Ruta por defecto redirige a login
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 

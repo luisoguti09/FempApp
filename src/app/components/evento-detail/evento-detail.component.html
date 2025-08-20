@@ -1,15 +1,124 @@
-<div class="main-gradient">
+ <div class="main-gradient">
   <mat-toolbar color="primary">
-    <span>Detalles del Evento</span>
+    <span>{{ listMode ? 'Eventos Disponibles' : 'Detalles del Evento' }}</span>
     <span class="spacer"></span>
-    <button mat-icon-button (click)="volver()">
+    <button mat-icon-button (click)="volver()" *ngIf="!listMode">
       <mat-icon>arrow_back</mat-icon>
     </button>
   </mat-toolbar>
 
   <div class="content">
-    <!-- Sección Detalles del Evento -->
     <!-- Deportistas inscriptos -->
+    <div *ngIf="deportistasInscritos && deportistasInscritos.length > 0 && !listMode">
+      <h3>Deportistas Inscriptos</h3>
+      <mat-list>
+        <mat-list-item *ngFor="let dep of deportistasInscritos">
+          <mat-icon matListIcon>person</mat-icon>
+          <div class="mat-line">{{ dep.nombre }} ({{ dep.dni }})</div>
+          <div class="mat-line secondary">{{ dep?.categoria }} - {{ dep?.club }}</div>
+        </mat-list-item>
+      </mat-list>
+    </div>
+
+    <div class="card-section" *ngIf="evento && !listMode">
+      <h2>Info del Evento</h2>
+      <p><strong>Nombre:</strong> {{ evento.nombre }}</p>
+      <p><strong>Lugar:</strong> {{ evento.lugar }}</p>
+      <p><strong>Descripción:</strong> {{ evento.descripcion }}</p>
+      <button mat-raised-button color="accent" (click)="onSubmitInscripcion()">Inscribirme</button>
+    </div>
+  </div>
+
+  <!-- Lista de eventos disponibles -->
+ <div class="main-gradient">
+  <mat-toolbar color="primary">
+    <span>{{ listMode ? 'Eventos Disponibles' : 'Detalles del Evento' }}</span>
+    <span class="spacer"></span>
+    <button mat-icon-button (click)="volver()" *ngIf="!listMode">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="content">
+
+    <!-- ==================== LISTA (SIN :id) ==================== -->
+    <ng-container *ngIf="listMode">
+      <h2>Eventos Disponibles</h2>
+
+      <ng-container *ngIf="eventos?.length; else noHay">
+        <div class="eventos-grid">
+          <mat-card class="evento-card"
+                    *ngFor="let ev of eventos; trackBy: trackById">
+            <mat-card-header>
+              <mat-card-title>{{ ev.nombre }}</mat-card-title>
+              <mat-card-subtitle>{{ ev.fecha | date:'dd/MM/yyyy' }}</mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <p><strong>Lugar:</strong> {{ ev.lugar || 'No especificado' }}</p>
+              <p>{{ ev.descripcion || 'Sin descripción' }}</p>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <button mat-raised-button color="accent" (click)="verDetalleEvento(ev.id)">
+                Ver Detalles
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </ng-container>
+
+      <ng-template #noHay>
+        <p style="opacity:.8">No hay eventos disponibles por el momento.</p>
+      </ng-template>
+    </ng-container>
+
+    <!-- ==================== DETALLE (CON :id) ==================== -->
+    <ng-container *ngIf="!listMode">
+      <!-- Deportistas inscriptos -->
+      <div *ngIf="deportistasInscritos && deportistasInscritos.length > 0">
+        <h3>Deportistas Inscriptos</h3>
+        <mat-list>
+          <mat-list-item *ngFor="let dep of deportistasInscritos">
+            <mat-icon matListIcon>person</mat-icon>
+            <div class="mat-line">{{ dep.nombre }} ({{ dep.dni }})</div>
+            <div class="mat-line secondary">{{ dep?.categoria }} - {{ dep?.club }}</div>
+          </mat-list-item>
+        </mat-list>
+      </div>
+
+      <div class="card-section" *ngIf="evento">
+        <h2>Info del Evento</h2>
+        <p><strong>Nombre:</strong> {{ evento.nombre }}</p>
+        <p><strong>Lugar:</strong> {{ evento.lugar }}</p>
+        <p><strong>Descripción:</strong> {{ evento.descripcion }}</p>
+        <button mat-raised-button color="accent" (click)="onSubmitInscripcion()">Inscribirme</button>
+      </div>
+    </ng-container>
+
+  </div>
+</div>
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ <!--<div class="main-gradient">
+  <mat-toolbar color="primary">
+    <span>Detalles del Evento</span>
+    <span class="spacer"></span>
+    <button mat-icon-button (click)="volver()">
+      <mat-icon>arrow_back</mat-icon>
+    </button> 
+  </mat-toolbar>
+
+  <div class="content">
+    < Sección Detalles del Evento >
+    < Deportistas inscriptos >
     <div *ngIf="deportistasInscritos && deportistasInscritos.length > 0">
       <h3>Deportistas Inscriptos</h3>
       <mat-list>
@@ -43,4 +152,4 @@
       </mat-list>
     </mat-card>
   </div>
-</div>
+</div>-->

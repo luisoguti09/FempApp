@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnInit, ViewEncapsulation, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { DeportistComponent } from '../deportist/deportist.component';
 import { MatTable, MatTableDataSource } from '@angular/material/table';
@@ -74,7 +74,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class DashboardDeportComponent implements OnInit {
 
-  private router = inject(Router);
+  public router = inject(Router);
   private depServ = inject(DeportistService);
   public empadronada: string = "";
   public displayedColumns: string[] = ['apellidoYNombre', 'fechadeNacimiento', 'club', 'categoria'];
@@ -83,7 +83,14 @@ export class DashboardDeportComponent implements OnInit {
   public filterValue = '';
   public pers: any = {};
   readonly dialog = inject(MatDialog);
+  private cdr = inject(ChangeDetectorRef);
   public eventosInscriptos: Evento[] = [];
+  public eventosDisponibles: Evento[] = [];
+
+  public nombre: string = '';
+  public club: string = '';
+  public categoria: string = '';
+  public fotoPerfilUrl: string = 'assets/img/default-profile.jpg';
 
   private regServ = inject(RegistroService);
   private authService = inject(AuthService);
@@ -91,6 +98,11 @@ export class DashboardDeportComponent implements OnInit {
   readonly snackBar = inject(MatSnackBar);
 
   ngOnInit() {
+    const usuario = this.authService.getUsuario();
+    if (!usuario?.dni) {
+      this.router.navigate(['/login']);
+      return;
+    }
     this.mostrarMisDatos();
   }
 
@@ -100,10 +112,18 @@ export class DashboardDeportComponent implements OnInit {
 
     if (!usuario || !usuario.dni) {
       console.warn('No se encontraron datos válidos del usuario logueado.');
-      this.router.navigate(['/login']); 
+      this.router.navigate(['/login']);
       return;
     }
 
+    this.nombre = usuario.nombre || '';
+    this.club = usuario?.padron?.club || usuario.club || '';
+    this.categoria = usuario?.padron?.categoria || usuario.categoria || '';
+    this.fotoPerfilUrl = usuario.fotoPerfil
+      ? (usuario.fotoPerfil.startsWith('http')
+        ? usuario.fotoPerfil
+        : `http://localhost:3000/${usuario.fotoPerfil}`)
+      : 'assets/img/default-profile.jpg';
     usuario.club = usuario?.padron?.club || '';
     usuario.categoria = usuario?.padron?.categoria || '';
     this.pers = { ...usuario };
@@ -133,12 +153,23 @@ export class DashboardDeportComponent implements OnInit {
     this.eventServ.getEventos().subscribe({
       next: (eventos: Evento[]) => {
         this.dataSource = new MatTableDataSource(eventos);
+        this.eventosDisponibles = [...(eventos ?? [])];
+        this.cdr.markForCheck();
         console.log('Eventos disponibles:', eventos);
       },
       error: err => {
         console.error('Error al obtener eventos:', err);
+        this.eventosDisponibles = [];
+        this.cdr.markForCheck();
       }
     });
+  }
+
+  get mostrarEventosEnDashboard(): boolean {
+  return !this.router.url.includes('/mis-datos');
+}
+  get mostrarMisDatosEnDashboard(): boolean {
+    return this.router.url.includes('/mis-datos');
   }
 
   mostrarEventosInscriptos(): void {
@@ -157,6 +188,7 @@ export class DashboardDeportComponent implements OnInit {
   }
 
 
+
   inscribirEvento(eventoId: number): void {
     const usuarioId = this.authService?.loggedUser?.id;
     if (!usuarioId) return;
@@ -164,7 +196,7 @@ export class DashboardDeportComponent implements OnInit {
     this.eventServ.inscribirDeportista(eventoId, usuarioId).subscribe({
       next: () => {
         this.snackBar.open('Registro exitoso', 'Cerrar', { duration: 3000 });
-        this.mostrarEventosInscriptos(); 
+        this.mostrarEventosInscriptos();
       },
       error: err => {
         console.error('Error al inscribirse al evento:', err);
@@ -175,6 +207,14 @@ export class DashboardDeportComponent implements OnInit {
 
   seleccionarEvento(evento: Evento): void {
     this.router.navigate(['/evento-detail', evento.id]);
+  }
+
+  trackById(_: number, e: Evento) {
+    return e.id;
+  }
+
+  onAvatarError(e: Event) {
+    (e.target as HTMLImageElement).src = 'assets/img/default-profile.jpg';
   }
 
 

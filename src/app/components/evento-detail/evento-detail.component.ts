@@ -13,7 +13,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDialog } from '@angular/material/dialog';
-
+import { MatListModule } from '@angular/material/list'; 
 
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -38,6 +38,7 @@ import { LoginService } from '../../services/login.service';
     MatCardModule,
     MatSelectModule,
     MatToolbarModule,
+    MatListModule,
 
   ],
   templateUrl: './evento-detail.component.html',
@@ -59,6 +60,7 @@ export class EventoDetailComponent implements OnInit {
   public deportistasInscritos: any[] = [];
   public eventos: Evento[] = [];
   public deportistas: any[] = [];
+  public listMode = false;
   injectedRoute = inject(ActivatedRoute);
   private logServ = inject(LoginService);
   private matDialog = inject(MatDialog);
@@ -67,13 +69,32 @@ export class EventoDetailComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.injectedRoute.params.subscribe(params => {
-      this.mostrarEventoById(params['evento']);
+    const mode = (this.injectedRoute.snapshot.data?.['mode'] as string) || '';
+    if (mode === 'disponibles') {
+      this.listMode = true;
+      this.mostrarTodosEventos();
+      return; 
+    }
+      this.injectedRoute.params.subscribe(params => {
+    const eventoId = params['evento'];
+    if (eventoId) {
+      this.mostrarEventoById(eventoId);
       this.formularioInscripcion();
-    });
-    this.mostrarTodosEventos();
-    this.getDeportistasInscritos(this.evento?.id);
-
+    } else {  
+      const usuario = this.logServ.loggedUser?.usuario;
+      if (usuario?.dni) {
+        this.eventServ.getEventosDelUsuario(usuario.dni).subscribe({
+          next: (eventos) => {
+            this.eventos = eventos;
+            console.log('Eventos inscriptos:', eventos);
+          },
+          error: (e) => {
+            console.error('Error cargando eventos inscriptos:', e);
+          }
+        });
+      }
+    }
+  });
   }
 
   mostrarEventoById(id: number) {
@@ -195,6 +216,8 @@ export class EventoDetailComponent implements OnInit {
   volver() {
     this.router.navigate(['/dashboard-deport']);
   }
+
+  trackById(_: number, e: Evento) { return e.id; }
 
   formularioInscripcion() {
     this.form = this.fb.group({

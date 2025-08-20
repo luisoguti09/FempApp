@@ -31,25 +31,35 @@
   justify-content: center;
   margin-bottom: 1rem;
 
+  .avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid white;
+    object-fit: cover;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  }
+
   .edit-avatar-btn {
     position: absolute;
     bottom: 5px;
-    right: calc(50% - 50px);
-    background-color: white;
-    color: #0E32EF;
+    right: calc(50% - 50px); // Ajusta la posición del lápiz en relación al avatar
+    background-color: #0E32EF;
+    color: white;
+    border: 2px solid white;
+    border-radius: 50% !important;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, background-color 0.3s ease;
+
+    mat-icon {
+      font-size: 20px;
+    }
+
+    &:hover {
+      background-color: #284cff;
+      transform: scale(1.1);
+    }
   }
-}
-
-
-.avatar {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid white;
-  background-color: #fff; // por si no carga la imagen
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 

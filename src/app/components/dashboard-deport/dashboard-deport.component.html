@@ -1,36 +1,78 @@
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #sidenav mode="side" opened class="sidebar">
+  <!-- Cambiamos a mode="over", quitamos "opened" y cerramos al tocar el backdrop -->
+  <mat-sidenav #sidenav mode="over" (backdropClick)="sidenav.close()">
     <mat-nav-list>
-      <a mat-list-item routerLink="mis-datos" routerLinkActive="active">
+      <a mat-list-item routerLink="mis-datos" routerLinkActive="active" (click)="sidenav.close()">
         <mat-icon>account_circle</mat-icon>
-        <span>Mis Datos</span>  
+        <span>Mis Datos</span>
       </a>
-      <a mat-list-item routerLink="eventos-inscriptos" routerLinkActive="active">
-  <mat-icon>event</mat-icon>
-  <span>Mis Eventos</span>
-</a>
+      <a mat-list-item routerLink="mis-eventos" routerLinkActive="active" (click)="sidenav.close()">
+        <mat-icon>event</mat-icon>
+        <span>Mis Eventos</span>
+      </a>
     </mat-nav-list>
   </mat-sidenav>
 
   <mat-sidenav-content class="main-gradient">
+    <!-- Agregamos botón de menú para abrir/cerrar el sidenav -->
     <mat-toolbar color="primary">
+      <button mat-icon-button (click)="sidenav.toggle()" aria-label="Abrir menú">
+        <mat-icon>menu</mat-icon>
+      </button>
       <span>Escritorio Deportista</span>
       <span class="spacer"></span>
-
-      <button mat-icon-button [matMenuTriggerFor]="menu">
-        <mat-icon>more_vert</mat-icon>
-      </button>
-      <mat-menu #menu="matMenu">
-        <button mat-menu-item (click)="mostrarFotoPerfil()">
-          <mat-icon>visibility</mat-icon>
-          <span>Ver Foto</span>
-        </button>
-        <button mat-menu-item (click)="eliminarFotoPerfil()">
-          <mat-icon>delete</mat-icon>
-          <span>Eliminar Foto</span>
-        </button>
-      </mat-menu>
     </mat-toolbar>
+
+    <!-- Header compacto (sin cambios de lógica) -->
+    <section class="profile-strip">
+      <div class="avatar">
+        <img [src]="fotoPerfilUrl" alt="Foto de perfil" width="72" height="72" (error)="onAvatarError($event)">
+        <button mat-mini-fab class="edit" color="accent" routerLink="mis-datos">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </div>
+      <div class="info">
+        <h3>{{ nombre || 'Mi Perfil' }}</h3>
+        <div class="meta" *ngIf="club || categoria">
+          <span *ngIf="club">Club: {{ club }}</span>
+          <span *ngIf="categoria">· {{ categoria }}</span>
+        </div>
+        <a mat-stroked-button routerLink="mis-datos">Ver / Editar datos</a>
+      </div>
+    </section>
+
+    <!-- Eventos disponibles -->
+    <div class="content" *ngIf="mostrarEventosEnDashboard">
+      <div class="content">
+        <h2>Eventos Disponibles</h2>
+
+        <ng-container *ngIf="eventosDisponibles.length; else noHay">
+          <div class="eventos-grid">
+            <mat-card class="evento-card" *ngFor="let evento of eventosDisponibles; trackBy: trackById" @fadeInCard>
+              <mat-card-header>
+                <mat-card-title>{{ evento.nombre }}</mat-card-title>
+                <mat-card-subtitle>{{ evento.fecha | date:'dd/MM/yyyy' }}</mat-card-subtitle>
+              </mat-card-header>
+
+              <mat-card-content>
+                <p><strong>Lugar:</strong> {{ evento.lugar || 'No especificado' }}</p>
+                <p>{{ evento.descripcion || 'Sin descripción' }}</p>
+              </mat-card-content>
+
+              <mat-card-actions>
+                <button mat-raised-button color="accent" (click)="seleccionarEvento(evento)">
+                  Ver Detalles
+                </button>
+              </mat-card-actions>
+            </mat-card>
+          </div>
+        </ng-container>
+
+        <ng-template #noHay>
+          <p style="opacity:.8">No hay eventos disponibles por el momento.</p>
+        </ng-template>
+      </div>
+    </div>
     <router-outlet></router-outlet>
   </mat-sidenav-content>
 </mat-sidenav-container>

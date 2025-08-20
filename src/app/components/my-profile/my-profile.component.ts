@@ -141,7 +141,7 @@ export class MyProfileComponent implements OnInit {
 
   this.authService.updatePerfilUsuario(payload).subscribe({
     next: () => {
-      this.snackBar.open('✅ Datos actualizados correctamente', 'Cerrar', {
+      this.snackBar.open('Datos actualizados correctamente', 'Cerrar', {
         duration: 3000,
         horizontalPosition: 'right',
         verticalPosition: 'top',
@@ -149,7 +149,7 @@ export class MyProfileComponent implements OnInit {
       });
     },
     error: () => {
-      this.snackBar.open('❌ Error al actualizar los datos', 'Cerrar', {
+      this.snackBar.open('Error al actualizar los datos', 'Cerrar', {
         duration: 3000,
         horizontalPosition: 'right',
         verticalPosition: 'top',
@@ -158,6 +158,51 @@ export class MyProfileComponent implements OnInit {
     }
   });
 }
+
+onFileSelected(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('fotoPerfil', file);
+
+  this.deportistService.subirFotoPerfil(this.usuario.dni, formData).subscribe({
+    next: (res) => {
+      this.usuario.fotoPerfil = res.url; // 🔥 refresca imagen automáticamente
+      this.snackBar.open('✅ Foto de perfil actualizada', 'Cerrar', { duration: 3000 });
+    },
+    error: () => this.snackBar.open('❌ Error al subir foto', 'Cerrar', { duration: 3000 })
+  });
+}
+
+triggerFileInput() {
+  const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+  fileInput?.click();
+}
+
+trackById(_: number, e: Evento) { return e.id; }
+
+cambiarFotoPerfil() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (event: any) => {
+    const file = event.target.files[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('fotoPerfil', file);
+      this.deportistService.subirFotoPerfil(this.usuario.dni, formData).subscribe({
+        next: (res) => {
+          this.snackBar.open('✅ Foto actualizada', 'Cerrar', { duration: 3000 });
+          this.usuario.fotoPerfil = res.url; // refresca la imagen
+        },
+        error: () => this.snackBar.open('❌ Error al subir foto', 'Cerrar', { duration: 3000 })
+      });
+    }
+  };
+  input.click();
+}
+
 }
 
 

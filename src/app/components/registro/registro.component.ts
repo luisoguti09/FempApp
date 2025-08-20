@@ -76,7 +76,6 @@ export class RegistroComponent {
       return true;
     } else {
       error: (e: { error: { error: any; }; }) => {
-        //mostrar mensaje de error sacandolo de error
         console.log(e.error.error);
       };
       return false;
@@ -111,7 +110,7 @@ export class RegistroComponent {
     rolId: this.form.get('rolId')?.value
   };
 
-  console.log('📤 Datos a enviar en registro:', datos);
+  console.log('Datos a enviar en registro:', datos);
 
   this.regServ.guardar(
     datos.nombre,
