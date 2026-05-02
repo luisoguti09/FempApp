@@ -1,57 +1,23 @@
- <div class="main-gradient">
-  <mat-toolbar color="primary">
-    <span>{{ listMode ? 'Eventos Disponibles' : 'Detalles del Evento' }}</span>
-    <span class="spacer"></span>
-    <button mat-icon-button (click)="volver()" *ngIf="!listMode">
+<div class="main-gradient">
+
+  <div class="back-wrapper">
+    <button mat-stroked-button class="back-btn" (click)="volver()">
       <mat-icon>arrow_back</mat-icon>
+      Volver
     </button>
-  </mat-toolbar>
-
-  <div class="content">
-    <!-- Deportistas inscriptos -->
-    <div *ngIf="deportistasInscritos && deportistasInscritos.length > 0 && !listMode">
-      <h3>Deportistas Inscriptos</h3>
-      <mat-list>
-        <mat-list-item *ngFor="let dep of deportistasInscritos">
-          <mat-icon matListIcon>person</mat-icon>
-          <div class="mat-line">{{ dep.nombre }} ({{ dep.dni }})</div>
-          <div class="mat-line secondary">{{ dep?.categoria }} - {{ dep?.club }}</div>
-        </mat-list-item>
-      </mat-list>
-    </div>
-
-    <div class="card-section" *ngIf="evento && !listMode">
-      <h2>Info del Evento</h2>
-      <p><strong>Nombre:</strong> {{ evento.nombre }}</p>
-      <p><strong>Lugar:</strong> {{ evento.lugar }}</p>
-      <p><strong>Descripción:</strong> {{ evento.descripcion }}</p>
-      <button mat-raised-button color="accent" (click)="onSubmitInscripcion()">Inscribirme</button>
-    </div>
   </div>
 
-  <!-- Lista de eventos disponibles -->
- <div class="main-gradient">
-  <mat-toolbar color="primary">
-    <span>{{ listMode ? 'Eventos Disponibles' : 'Detalles del Evento' }}</span>
-    <span class="spacer"></span>
-    <button mat-icon-button (click)="volver()" *ngIf="!listMode">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-  </mat-toolbar>
-
   <div class="content">
-
-    <!-- ==================== LISTA (SIN :id) ==================== -->
-    <ng-container *ngIf="listMode">
-      <h2>Eventos Disponibles</h2>
+    <!-- ===== LISTA ===== -->
+    <ng-container *ngIf="listMode; else detalle">
+      <h2>{{ listTitle }}</h2>
 
       <ng-container *ngIf="eventos?.length; else noHay">
         <div class="eventos-grid">
-          <mat-card class="evento-card"
-                    *ngFor="let ev of eventos; trackBy: trackById">
+          <mat-card class="evento-card" *ngFor="let ev of eventos; trackBy: trackById">
             <mat-card-header>
-              <mat-card-title>{{ ev.nombre }}</mat-card-title>
-              <mat-card-subtitle>{{ ev.fecha | date:'dd/MM/yyyy' }}</mat-card-subtitle>
+              <mat-card-title>{{ ev.titulo }}</mat-card-title>
+              <mat-card-subtitle>{{ ev.fechaInicio | date:'dd/MM/yyyy' }}</mat-card-subtitle>
             </mat-card-header>
 
             <mat-card-content>
@@ -67,89 +33,79 @@
           </mat-card>
         </div>
       </ng-container>
-
       <ng-template #noHay>
-        <p style="opacity:.8">No hay eventos disponibles por el momento.</p>
+        <p style="opacity:.8">
+          {{ listTitle === 'Mis Eventos'
+          ? 'No estás inscripto en eventos por el momento.'
+          : 'No hay eventos disponibles por el momento.' }}
+        </p>
       </ng-template>
     </ng-container>
 
-    <!-- ==================== DETALLE (CON :id) ==================== -->
-    <ng-container *ngIf="!listMode">
-      <!-- Deportistas inscriptos -->
-      <div *ngIf="deportistasInscritos && deportistasInscritos.length > 0">
-        <h3>Deportistas Inscriptos</h3>
+    <!-- ===== DETALLE ===== -->
+    <ng-template #detalle>
+      <div *ngIf="puedeVerInscriptos">
+        <h3>Deportistas inscriptos</h3>
         <mat-list>
           <mat-list-item *ngFor="let dep of deportistasInscritos">
-            <mat-icon matListIcon>person</mat-icon>
-            <div class="mat-line">{{ dep.nombre }} ({{ dep.dni }})</div>
-            <div class="mat-line secondary">{{ dep?.categoria }} - {{ dep?.club }}</div>
+            {{ dep.nombre }} ({{ dep.dni }})
           </mat-list-item>
         </mat-list>
       </div>
 
       <div class="card-section" *ngIf="evento">
+
+        <div *ngIf="!inscripto" class="perfil-selector">
+          <h3>Elegí con qué perfil deportivo te inscribís</h3>
+
+          <div class="perfiles-carousel" *ngIf="perfilesDeportivos.length; else sinPerfiles">
+            <div class="perfil-card" *ngFor="let perfil of perfilesDeportivos"
+              [class.selected]="perfilSeleccionadoId === perfil.id" (click)="seleccionarPerfil(perfil.id)">
+              <div class="perfil-header">
+                <h3>{{ perfil.disciplina }}</h3>
+                <span class="perfil-temporada">{{ perfil.temporada }}</span>
+              </div>
+
+              <p class="perfil-categoria">{{ perfil.categoria }}</p>
+
+              <div class="perfil-meta">
+                <span>{{ perfil.licencia }}</span>
+                <span>{{ perfil.modalidad }}</span>
+                <span>{{ perfil.divisional }}</span>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #sinPerfiles>
+            <p>No tenés perfiles deportivos cargados. Primero cargalos desde Mis Datos.</p>
+          </ng-template>
+        </div>
+
         <h2>Info del Evento</h2>
-        <p><strong>Nombre:</strong> {{ evento.nombre }}</p>
+        <p><strong>Nombre:</strong> {{ evento.titulo }}</p>
         <p><strong>Lugar:</strong> {{ evento.lugar }}</p>
         <p><strong>Descripción:</strong> {{ evento.descripcion }}</p>
-        <button mat-raised-button color="accent" (click)="onSubmitInscripcion()">Inscribirme</button>
-      </div>
-    </ng-container>
+        <div class="evento-actions">
+          <button mat-raised-button class="btn-inscripcion" *ngIf="!inscripto"
+            [disabled]="inscribiendo || !perfilSeleccionadoId" (click)="inscribirse()">
+            {{ inscribiendo ? 'Inscribiendo…' : 'Inscribirme' }}
+          </button>
 
+          <button mat-stroked-button class="btn-secundario" (click)="descargarCert()" [disabled]="!inscripto">
+            Descargar certificado
+          </button>
+
+          <button mat-stroked-button class="btn-secundario" *ngIf="inscripto" (click)="irAScanner()">
+            <mat-icon>qr_code_scanner</mat-icon>
+            Escanear QR de asistencia
+          </button>
+        </div>
+
+        <p class="hint-certificado" *ngIf="!inscripto">
+          Debés estar inscripto para descargar el certificado.
+        </p>
+
+      </div>
+    </ng-template>
   </div>
 </div>
-
-
- 
- 
- 
- 
- 
- 
- 
- <!--<div class="main-gradient">
-  <mat-toolbar color="primary">
-    <span>Detalles del Evento</span>
-    <span class="spacer"></span>
-    <button mat-icon-button (click)="volver()">
-      <mat-icon>arrow_back</mat-icon>
-    </button> 
-  </mat-toolbar>
-
-  <div class="content">
-    < Sección Detalles del Evento >
-    < Deportistas inscriptos >
-    <div *ngIf="deportistasInscritos && deportistasInscritos.length > 0">
-      <h3>Deportistas Inscriptos</h3>
-      <mat-list>
-        <mat-list-item *ngFor="let dep of deportistasInscritos">
-          <mat-icon matListIcon>person</mat-icon>
-          <div class="mat-line">{{ dep.nombre }} ({{ dep.dni }})</div>
-          <div class="mat-line secondary">{{ dep?.categoria }} - {{ dep?.club }}</div>
-        </mat-list-item>
-      </mat-list>
-    </div>
-    <div class="card-section" *ngIf="evento">
-      <h2>Info del Evento</h2>
-      <p><strong>Nombre:</strong> {{ evento.nombre }}</p>
-      <p><strong>Lugar:</strong> {{ evento.lugar }}</p>
-      <p><strong>Descripción:</strong> {{ evento.descripcion }}</p>
-      <button mat-raised-button color="accent" (click)="onSubmitInscripcion()">Inscribirme</button>
-    </div>
-
-  </div>
-
-  <div>
-    <mat-card class="card-section" *ngIf="eventos.length > 0">
-      <h2>Eventos Disponibles</h2>
-      <mat-list>
-        <mat-list-item *ngFor="let ev of eventos">
-          <mat-icon matListIcon>event</mat-icon>
-          <div class="mat-line">{{ ev.nombre }} – {{ ev.fecha | date:'dd/MM/yyyy' }}</div>
-          <div class="mat-line secondary">{{ ev.lugar }}</div>
-          <button mat-stroked-button color="accent" (click)="verDetalleEvento(ev.id)">Ver Detalles</button>
-        </mat-list-item>
-      </mat-list>
-    </mat-card>
-  </div>
-</div>-->

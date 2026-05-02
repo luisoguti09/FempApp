@@ -18,4 +18,13 @@ export class ElementosService {
       })
     );
   }
+
+  getEvaluaciones(deportistaId: number) {
+    return this.http.get<any[]>(`${this.apiUrl}/evaluaciones/${deportistaId}`);
+  }
+
+  crearElemento(data: any) {
+    return this.http.post<any>(this.apiUrl, data);
+  }
+
 }

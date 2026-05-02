@@ -13,4 +13,8 @@ export interface Usuario {
   dniDorso?: string;
   fichaMedica?: string;
   documentacionAprobada?: boolean;
+   // nuevos opcionales hasta que ADMIN se encuentre habilitado
+  estado?: 'pendiente'|'aprobado'|'bloqueado'|null;
+  rolSolicitado?: 'administrador'|'tecnico'|'deportista'|null;
+  qrJti?: string|null;
 }

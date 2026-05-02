@@ -1,9 +1,12 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.fempa',
-  appName: 'FempaApp',
-  webDir: 'dist'
+  appId: 'com.fempapp.app',
+  appName: 'FempApp',
+  webDir: 'dist/femp-app/browser',
+  server: {
+    androidScheme: 'http'
+  }
 };
 
 export default config;

@@ -1,37 +1,53 @@
+// src/app/services/registro.service.ts
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
-import { environment } from '../../environments/environment.development';
-import { Usuario } from '../interfaces/usuario';
-import { Observable } from 'rxjs';
+import { forkJoin, of, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
-
-@Injectable({
-  providedIn: 'root'
-})
-export class RegistroService {
-
-  private apURL = environment.SERVER_API;
-  private http = inject(HttpClient);
-
-  buscar(dni: string): Observable<Usuario> {
-  return this.http.get<Usuario>(`${this.apURL}/usuarios/${dni}`);
+export interface RegistroPayload {
+  nombre: string;
+  edad: number;
+  email: string;
+  password: string;
+  dni: string | number;
+  rolId: number;
+  categoria?: string; // solo deportista
+  nivel?: string;     // solo técnico
 }
-  guardar(
+
+@Injectable({ providedIn: 'root' })
+export class RegistroService {
+  private http = inject(HttpClient);
+  private apURL = environment.SERVER_API; 
+
+
+  buscar(dni: string) {
+    return forkJoin({
+      padron: this.http.get(`${this.apURL}/padron/${dni}`).pipe(
+        catchError(err => err.status === 404 ? of(null) : throwError(() => err))
+      ),
+      usuario: this.http.get(`${this.apURL}/usuarios/dni/${dni}`).pipe(
+        catchError(err => err.status === 404 ? of(null) : throwError(() => err))
+      )
+    });
+  }
+
+  /** Registrar usuario con payload (opcional: categoria/nivel según rol) */
+  guardar(payload: RegistroPayload) {
+    return this.http.post(`${this.apURL}/auth/register`, payload);
+  }
+
+  /** Compatibilidad temporal (si algo del front viejo sigue llamando con params sueltos) */
+  guardarCompat(
     nombre: string,
     edad: number,
     email: string,
     password: string,
-    dni: string,         
+    dni: string,
     rolId: number
   ) {
-    return this.http.post(`${this.apURL}/register`, {
-      nombre,
-      edad,
-      email,
-      password,
-      dni,            
-      rolId
-    });
+    return this.guardar({ nombre, edad, email, password, dni, rolId });
   }
 
   getRoles() {
@@ -39,3 +55,6 @@ export class RegistroService {
   }
 }
 
+
+
+ 

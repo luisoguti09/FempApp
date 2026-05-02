@@ -1,5 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { Evento } from '../../interfaces/evento';
+import { Evento, EventoLite } from '../../interfaces/evento';
+import { NuevoEventoDto, EditEventoDto } from '../../interfaces/evento-dto';
 import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { EventosService } from '../../services/eventos.service';
 import { MatCard, MatCardActions } from '@angular/material/card';
@@ -13,12 +14,18 @@ import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDialog } from '@angular/material/dialog';
-import { MatListModule } from '@angular/material/list'; 
+import { MatListModule } from '@angular/material/list';
+import { AuthService } from '../../services/auth.service';
+import { CertificadoService } from '../../services/certificado.service';
 
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DialogsComponent } from '../dialogs/dialogs.component';
-import { LoginService } from '../../services/login.service';
+import { PagosService } from '../../services/pagos.service';
+import { Observable } from 'rxjs';
+import { CertEvento, CertUsuario } from '../../interfaces/certificados';
+import { PerfilDeportivo } from '../../interfaces/perfil-deportivo.interface';
+import { PerfilesDeportivosService } from '../../services/perfiles-deportivos.service';
 // import { showAthleteRegistro } from '../dialogs/dialogs.component';
 
 @Component({
@@ -51,7 +58,12 @@ export class EventoDetailComponent implements OnInit {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private eventServ = inject(EventosService);
-  //public chartType: ChartType = 'bar'; // o 'line', 'pie', etc.
+  private pagos = inject(PagosService);
+  private certServ = inject(CertificadoService);
+  private auth = inject(AuthService);
+  private matDialog = inject(MatDialog);
+  private perfilesService = inject(PerfilesDeportivosService);
+
   public chartData: any[] = [];
   public chartLabels: string[] = [];
   public chartOptions: any = {};
@@ -61,58 +73,138 @@ export class EventoDetailComponent implements OnInit {
   public eventos: Evento[] = [];
   public deportistas: any[] = [];
   public listMode = false;
+  public data: Evento[] = [];
   injectedRoute = inject(ActivatedRoute);
-  private logServ = inject(LoginService);
-  private matDialog = inject(MatDialog);
+  public listTitle = 'Eventos Disponibles';
+  public eventosDisponibles: Evento[] = [];
+  public inscripto: boolean = false;
+  public inscribiendo: boolean = false;
+  public evento$!: Observable<EventoLite>;
+  public perfilesDeportivos: PerfilDeportivo[] = [];
+  public perfilSeleccionadoId: number | null = null;
+
+
+
+
   constructor() { }
 
 
 
   ngOnInit(): void {
+
     const mode = (this.injectedRoute.snapshot.data?.['mode'] as string) || '';
-    if (mode === 'disponibles') {
+    if (mode === 'inscriptos' || mode === 'disponibles') {
       this.listMode = true;
-      this.mostrarTodosEventos();
-      return; 
-    }
-      this.injectedRoute.params.subscribe(params => {
-    const eventoId = params['evento'];
-    if (eventoId) {
-      this.mostrarEventoById(eventoId);
-      this.formularioInscripcion();
-    } else {  
-      const usuario = this.logServ.loggedUser?.usuario;
-      if (usuario?.dni) {
-        this.eventServ.getEventosDelUsuario(usuario.dni).subscribe({
-          next: (eventos) => {
-            this.eventos = eventos;
-            console.log('Eventos inscriptos:', eventos);
-          },
-          error: (e) => {
-            console.error('Error cargando eventos inscriptos:', e);
-          }
-        });
+      this.listTitle = (mode === 'inscriptos') ? 'Mis Eventos' : 'Eventos Disponibles';
+
+      if (mode === 'inscriptos') {
+        const dni = this.auth.getUsuario()?.dni;
+        if (dni != null) {
+          this.eventServ.getEventosDelUsuario(Number(dni)).subscribe({
+            next: (evs) => this.eventos = evs ?? [],
+            error: () => (this.eventos = [])
+          });
+        } else {
+          this.eventos = [];
+        }
+      } else {
+        this.mostrarTodosEventos();
       }
+      return;
     }
-  });
+
+    const raw = this.injectedRoute.snapshot.paramMap.get('id')
+      ?? this.injectedRoute.snapshot.paramMap.get('evento');
+    const id = raw ? Number(raw) : NaN;
+    if (!Number.isFinite(id)) {
+      this.router.navigate(['/dashboard-deport']);
+      return;
+    }
+    this.eventServ.getEventoById(id).subscribe({
+      next: (ev) => {
+        this.evento = ev;
+        this.setInscriptoPara(id);
+      },
+      error: () => this.router.navigate(['/dashboard-deport'])
+    });
+    this.formularioInscripcion();
+    this.cargarPerfiles();
   }
 
-  mostrarEventoById(id: number) {
-    console.log(id, 'hola esta prueba de console');
+  cargarPerfiles(): void {
+    const usuario = this.auth.getUsuario();
+    if (!usuario?.id) return;
 
-    this.eventServ.getEventoById(id).subscribe({
-      next: (eventos: any) => {
-        this.evento = eventos.find((evento: Evento) => evento.id == id);
-        this.getDeportistasInscritos(this.evento.id);
-        console.log(this.evento);
+    this.perfilesService.getByUsuario(usuario.id).subscribe({
+      next: (perfiles) => {
+        this.perfilesDeportivos = perfiles || [];
+        console.log('Perfiles cargados:', this.perfilesDeportivos);
       },
-      error: (error: any) => {
-        console.error('Error fetching event:', error);
+      error: (err) => {
+        console.error('Error cargando perfiles:', err);
+        this.perfilesDeportivos = [];
       }
     });
   }
 
-  mostrarTodosEventos() {
+  private setInscriptoPara(eventoId: number): void {
+    const dni = this.auth.getUsuario()?.dni;
+    if (dni == null) { this.inscripto = false; return; }
+
+    this.eventServ.getEventosDelUsuario(Number(dni)).subscribe({
+      next: (evs) => this.inscripto = (evs ?? []).some(e => e.id === eventoId),
+      error: () => this.inscripto = false
+    });
+  }
+
+  inscribirse(): void {
+    if (!this.evento) return;
+
+    const user = this.auth.getUsuario();
+    if (!user?.id) return;
+
+    if (!this.perfilSeleccionadoId) {
+      alert('Seleccioná un perfil deportivo antes de inscribirte');
+      return;
+    }
+
+    this.inscribiendo = true;
+
+    this.eventServ.inscribirDeportista(
+      this.evento.id,
+      user.id,
+      this.perfilSeleccionadoId
+    ).subscribe({
+      next: () => {
+        this.inscripto = true;
+        this.inscribiendo = false;
+        this.abrirDialogo(true);
+      },
+      error: (err) => {
+        console.error('Error al inscribirse:', err);
+        this.inscribiendo = false;
+        this.abrirDialogo(false);
+      }
+    });
+  }
+
+
+  seleccionarPerfil(id: number): void {
+    this.perfilSeleccionadoId = id;
+  }
+
+  mostrarEventosById(id: number) {
+    this.eventServ.getEventoById(id).subscribe({
+      next: (evento) => {
+        this.evento = evento;
+        this.getDeportistasInscriptos(this.evento.id);
+        console.log('Evento:', this.evento);
+      },
+      error: (error) => console.error('Error fetching event:', error)
+    });
+  }
+
+  mostrarTodosEventoss() {
     this.eventServ.getEventos().subscribe({
       next: (eventos: Evento[]) => {
         this.eventos = eventos;
@@ -123,70 +215,126 @@ export class EventoDetailComponent implements OnInit {
     });
   }
 
-  crearEvento() {
-    this.evento.fechaInscripcion = new Date();
-    this.eventServ.addEvento(this.evento).subscribe({
-      next: (evento: Evento) => {
-        console.log('Evento creado con fecha de inscripción:', evento);
+  mostrarTodosEventos() {
+    this.eventServ.getEventos().subscribe({
+      next: (eventos) => {
+        this.eventos = eventos;
+        this.eventosDisponibles = eventos;
       },
-      error: (error: any) => {
-        console.error('Error creando evento:', error);
-      }
+      error: (e) => console.error('Error fetching events:', e)
     });
   }
 
   actualizarEvento() {
-    this.eventServ.updateEvento(this.evento).subscribe({
-      next: (evento: Evento) => {
-        console.log('Evento actualizado:', evento);
-      },
-      error: (error: any) => {
-        console.error('Error actualizando evento:', error);
-      }
+    const id = this.evento.id;
+    const dto = { ...this.evento };
+    this.eventServ.updateEvento(id, dto).subscribe({
+      next: (ev) => { this.evento = ev; },
+      error: (er) => console.error('Error actualizando evento:', er),
     });
+  }
+
+  descargarCertificado(e: Evento) {
+    const u = this.auth.getUsuario();
+    if (!u) { return; }
+
+    this.certServ.generar(
+      { nombre: u.nombre, dni: u.dni, club: u.club, categoria: u.categoria },
+      { titulo: e.titulo, fechaInicio: this.evento.fechaInicio ?? new Date(), lugar: e.lugar, nivel: e.nivel },
+      { filename: `cert_${u.dni}.pdf` }
+    );
+  }
+
+  async descargarCert(): Promise<void> {
+    const u = this.auth.getUsuario();
+    if (!u || !this.evento || !this.inscripto) return;
+
+    const perfil =
+      this.perfilesDeportivos.find(p => p.id === this.perfilSeleccionadoId)
+      ?? this.perfilesDeportivos[0];
+
+    const certUsuario: CertUsuario = {
+      nombre: u.nombre,
+      dni: u.dni,
+      club: perfil?.club ?? u.club ?? '',
+      categoria: perfil?.categoria ?? u.categoria ?? '',
+      disciplina: perfil?.disciplina ?? 'Patinaje Artístico',
+      licencia: perfil?.licencia ?? '',
+      modalidad: perfil?.modalidad ?? '',
+      divisional: perfil?.divisional ?? ''
+    };
+
+    const certEvento: CertEvento = {
+      titulo: this.evento.titulo || this.evento.nombre || 'Evento sin título',
+      fechaInicio: this.evento.fechaInicio ?? new Date(),
+      lugar: this.evento.lugar ?? '............................',
+      nivel: this.evento.nivel ?? ''
+    };
+
+    await this.certServ.generar(
+      certUsuario,
+      certEvento,
+      { filename: `cert_${u.dni}_${this.evento.id}.pdf` }
+    );
   }
 
   verDetalleEvento(id: number) {
     this.router.navigate(['/evento-detail', id]);
   }
 
+  inscribirseYPagar() {
+    const user = this.auth.getUsuario();
+    if (!user?.id || !this.evento?.id) { this.abrirDialogo(false); return; }
 
-  // Método para inscribirse a un evento
-
-  /*inscribirseEvento(eventoId: number, deportistaId: number) {
-  this.eventServ.inscribirDeportista(eventoId, deportistaId).subscribe({
-    next: (response: any) => {
-      this.matDialog.open(DialogsComponent, {
-        data: { success: true }
-      });
-      this.router.navigate(['/dashboard-deport']);
-    },
-    error: (error: any) => {
-      console.error('Error al inscribirte al evento:', error);
-      this.matDialog.open(DialogsComponent, {
-        data: { success: false }
-      });
-      this.router.navigate(['/dashboard-deport']);
+    if (this.deportistasInscritos.some(dep => dep.id === user.id)) {
+      this.abrirDialogo(false); return;
     }
-  });
-}*/
+
+    this.eventServ.inscribirDeportista(this.evento.id, user.id, this.perfilSeleccionadoId).subscribe({
+      next: () => {
+        const price = Number(this.evento?.precio ?? 200);
+        this.pagos.crearPreferencia({
+          title: `Inscripción - ${this.evento.titulo}`,
+          quantity: 1,
+          unit_price: price,
+          external_reference: `${this.evento.id}-${user.id}`
+        }).subscribe({
+          next: ({ init_point }) => { window.location.href = init_point; },
+          error: () => this.abrirDialogo(false)
+        });
+      },
+      error: () => this.abrirDialogo(false)
+    });
+  }
 
   inscribirseEvento() {
-    const usuario = this.logServ.loggedUser?.usuario;
-    const yaInscripto = this.deportistasInscritos.some(dep => dep.id === usuario.id);
+    const userId = this.auth.getUsuario()?.id;
+    if (!userId || !this.evento?.id) {
+      this.abrirDialogo(false);
+      return;
+    }
+
+    const yaInscripto = this.deportistasInscritos.some(dep => dep.id === userId);
     if (yaInscripto) {
       this.abrirDialogo(false);
       return;
     }
-    this.eventServ.inscribirDeportista(this.evento.id, usuario.id).subscribe({
-      next: () => {
-        this.abrirDialogo(true);
-      },
-      error: () => {
-        this.abrirDialogo(false);
-      }
+
+    this.eventServ.inscribirDeportista(this.evento.id, userId).subscribe({
+      next: () => this.abrirDialogo(true),
+      error: () => this.abrirDialogo(false)
     });
   }
+
+  irAScanner() {
+    if (!this.evento || !this.inscripto) return;
+
+    this.router.navigate(
+      ['/asistencias/scanner'],
+      { queryParams: { eventoId: this.evento.id } }
+    );
+  }
+
 
   abrirDialogo(success: boolean): void {
     this.matDialog.open(DialogsComponent, {
@@ -198,19 +346,6 @@ export class EventoDetailComponent implements OnInit {
       this.matDialog.closeAll();
       this.router.navigate(['/dashboard-deport']);
     }, 3000);
-  }
-
-
-
-  eliminarEvento(id: number) {
-    this.eventServ.deleteEvento(id).subscribe({
-      next: (evento: Evento) => {
-        console.log('Evento eliminado:', evento);
-      },
-      error: (error: any) => {
-        console.error('Error eliminando evento:', error);
-      }
-    });
   }
 
   volver() {
@@ -230,19 +365,8 @@ export class EventoDetailComponent implements OnInit {
     this.inscribirseEvento();
   }
 
-  /*getDeportistasInscritos(eventoId: number) {
-    this.eventServ.getEventoById(eventoId).subscribe({
-      next: (evento: any) => {
-        this.deportistasInscritos = evento[0].deportistas;
-        console.log(this.deportistasInscritos);
-      },
-      error: (error: any) => {
-        console.error('Error fetching event:', error);
-      }
-    });
-  }*/
 
-  getDeportistasInscritos(eventoId: number) {
+  getDeportistasInscriptos(eventoId: number) {
     this.eventServ.getDeportistasInscriptos(eventoId).subscribe({
       next: (usuarios: any[]) => {
         this.deportistasInscritos = usuarios;
@@ -251,6 +375,51 @@ export class EventoDetailComponent implements OnInit {
       error: (error: any) => {
         console.error('Error obteniendo inscriptos:', error);
       }
+    });
+  }
+
+  get puedeVerInscriptos(): boolean {
+    return this.auth.hasAnyRole(['administrador', 'tecnico']);
+  }
+
+  mostrarEventoById(id: number) {
+    this.eventServ.getEventoById(id).subscribe({
+      next: (evento) => {
+        this.evento = evento;
+        if (this.puedeVerInscriptos) {
+          this.getDeportistasInscriptos(this.evento.id);
+        }
+      },
+      error: (error) => console.error('Error fetching event:', error)
+    });
+  }
+
+  guardarCambios() {
+    const raw = this.form.getRawValue();
+
+    const dto: EditEventoDto = {
+      titulo: raw.titulo,
+      descripcion: raw.descripcion,
+      fechaInicio: raw.fechaInicio,
+      fechaFin: raw.fechaFin,
+      lugar: raw.lugar,
+      nivel: raw.nivel,
+      inscripcionRequierePago: raw.inscripcionRequierePago,
+      precio: raw.precio,
+      permiteEfectivo: raw.permiteEfectivo,
+      certificadoAuto: raw.certificadoAuto
+    };
+
+    this.eventServ.updateEvento(this.evento.id, dto).subscribe({
+      next: (ev) => {
+        this.evento = ev;
+        // snack / feedback visual
+        this.matDialog.open(DialogsComponent, {
+          data: { success: true, message: 'Evento actualizado con éxito.' },
+          panelClass: 'custom-dialog-panel'
+        });
+      },
+      error: (err) => console.error(err)
     });
   }
 

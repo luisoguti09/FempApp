@@ -60,6 +60,13 @@ export class LoginComponent implements OnInit {
         return;
       }
 
+      const rolId = res?.rolId ?? res?.usuario?.rolId ?? this.authService.getRolId();
+const target =
+  rolId === 2 ? '/admin' :       // administrador
+  rolId === 3 ? '/tecnico' :     // futuro panel técnico
+                '/perfil';       // deportista
+
+this.router.navigate([target]);
       console.log('Usuario logueado:', res.usuario); // <- ya es el objeto
 
       const role = res.usuario.rol;

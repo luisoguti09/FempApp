@@ -8,6 +8,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../../services/auth.service';
+import { UsuariosService } from '../../services/usuarios.service';
+import { QrCredencialComponent } from '../qr-credencial/qr-credencial.component';
 
 @Component({
   selector: 'app-documentacion',
@@ -19,21 +22,25 @@ import { environment } from '../../../environments/environment';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    QrCredencialComponent
   ],
   templateUrl: './documentacion.component.html',
   styleUrl: './documentacion.component.scss'
 })
 export class DocumentacionComponent {
-  private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
-
+  
   public form!: FormGroup;
   public previews: { [key: string]: string | ArrayBuffer | null } = {};
   public cargando: boolean = false;
   public successMsgDoc: string = '';
   public errorMsgDoc: string = '';
+
   private apiUrl = environment.SERVER_API;
+  private fb = inject(FormBuilder);
+  private http = inject(HttpClient);
+  private usuariosService = inject(UsuariosService);
+  private auth = inject(AuthService);
 
   ngOnInit() {
     this.form = this.fb.group({
@@ -41,7 +48,9 @@ export class DocumentacionComponent {
       dniDorso: [null],
       fichaMedica: [null]
     });
+  
   }
+
 
   onFileChange(event: any, field: string) {
     const file = event.target.files[0];

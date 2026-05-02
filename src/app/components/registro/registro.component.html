@@ -19,7 +19,13 @@
 
       <mat-card-actions>
         <section>
-          <button mat-raised-button (click)="buscar()">Buscar</button>
+          <button mat-raised-button (click)="buscar()" [disabled]="cargandoBuscar">
+            <ng-container *ngIf="!cargandoBuscar; else buscandoTpl">Buscar</ng-container>
+          </button>
+
+          <ng-template #buscandoTpl>
+            <mat-progress-spinner diameter="18" mode="indeterminate"></mat-progress-spinner>
+          </ng-template>
         </section>
       </mat-card-actions>
 
@@ -36,9 +42,17 @@
             <mat-label for="edad">Edad</mat-label>
             <input id="edad" type="number" matInput formControlName="edad" placeholder="18">
           </mat-form-field>
-          <mat-form-field class="example-full-width">
-            <mat-label for="nivel">Eficiencia y Categoria</mat-label>
-            <input id="nivel" type="text" matInput formControlName="nivel" placeholder="B Segunda">
+          <mat-form-field *ngIf="form.get('rolId')?.value === 1" appearance="outline">
+            <mat-label>Categoría</mat-label>
+            <input matInput formControlName="categoria" />
+            <mat-error *ngIf="form.get('categoria')?.hasError('required')">Requerida</mat-error>
+          </mat-form-field>
+
+          <!-- Nivel sólo para técnico -->
+          <mat-form-field *ngIf="form.get('rolId')?.value === 3" appearance="outline">
+            <mat-label>Nivel</mat-label>
+            <input matInput formControlName="nivel" />
+            <mat-error *ngIf="form.get('nivel')?.hasError('required')">Requerido</mat-error>
           </mat-form-field>
         </form>
       </div>
@@ -53,12 +67,14 @@
 
           <mat-form-field class="example-full-width">
             <mat-label for="password">Contraseña</mat-label>
-            <input id="password" type="password" matInput formControlName="password" placeholder="Ingresa una contraseña">
+            <input id="password" type="password" matInput formControlName="password"
+              placeholder="Ingresa una contraseña">
           </mat-form-field>
 
           <mat-form-field class="example-full-width">
             <mat-label for="password">Confirme su contraseña</mat-label>
-            <input id="confirmPass" type="password" matInput formControlName="confirmPass" placeholder="Reingresa tu contraseña">
+            <input id="confirmPass" type="password" matInput formControlName="confirmPass"
+              placeholder="Reingresa tu contraseña">
           </mat-form-field>
 
           <mat-form-field class="example-full-width" *ngIf="empadronada == 'NO_EMPADRONADA'">
@@ -85,7 +101,8 @@
 
           <section>
             <button mat-raised-button color="primary" type="submit" [disabled]="cargando">
-              <mat-progress-spinner *ngIf="cargando" mode="indeterminate" diameter="20" color="accent"></mat-progress-spinner>
+              <mat-progress-spinner *ngIf="cargando" mode="indeterminate" diameter="20"
+                color="accent"></mat-progress-spinner>
               <span *ngIf="!cargando">Registrar</span>
             </button>
           </section>

@@ -12,6 +12,9 @@ import { CommonModule } from '@angular/common';
 import { RegistroFastComponent } from '../registro-fast/registro-fast.component';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { finalize } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 
 @Component({
@@ -42,15 +45,19 @@ export class RegistroComponent {
 
 
   private router = inject(Router);
+  private http = inject(HttpClient);
+  private snack = inject(MatSnackBar);
   private fb = inject(FormBuilder);
   private regServ = inject(RegistroService);
+  
   public empadronada: string = "";
   public pers: any;
   public roles: any[] = [];
   public errorMsg: string = '';
   public successMsg: string = '';
   public cargando: boolean = false;
-
+  public cargandoBuscar = false;
+  loading = false;
 
 
   ngOnInit() {
@@ -61,7 +68,9 @@ export class RegistroComponent {
       password: new FormControl('', [Validators.required]),
       confirmPass: new FormControl('', [Validators.required]),
       dni: new FormControl('', [Validators.required]),
-      rolId: new FormControl(null, [Validators.required])
+      rolId: new FormControl(null, [Validators.required]),
+      categoria: [{ value: '', disabled: true }],
+    nivel:     [{ value: '', disabled: true }],
     });
 
     this.regServ.getRoles().subscribe({
@@ -69,7 +78,32 @@ export class RegistroComponent {
       error: err => console.log('Error al obtener roles', err)
     });
 
+     this.form.get('rolId')!.valueChanges.subscribe(rolId => this.configurarPorRol(rolId));
   }
+
+  private configurarPorRol(rolId: number) {
+  const categoria = this.form.get('categoria')!;
+  const nivel = this.form.get('nivel')!;
+
+  categoria.clearValidators(); categoria.disable(); categoria.setValue('');
+  nivel.clearValidators();     nivel.disable();     nivel.setValue('');
+
+
+  const deportista = 1; 
+  const administrador      = 2; 
+  const tecnico    = 3; 
+
+  if (rolId === deportista) {
+    categoria.enable();
+    categoria.setValidators([Validators.required]);
+  } else if (rolId === tecnico) {
+    nivel.enable();
+    nivel.setValidators([Validators.required]);
+  }
+
+  categoria.updateValueAndValidity({ emitEvent: false });
+  nivel.updateValueAndValidity({ emitEvent: false });
+}
 
   verificarPass() {
     if (this.form?.get('password')?.value == this.form?.get('confirmPass')?.value) {
@@ -83,16 +117,31 @@ export class RegistroComponent {
   }
 
   buscar() {
-    this.regServ.buscar(this.form?.get('dni')?.value)
-      .subscribe((res) => {
-        this.pers = res;
-        if (!!res) {
-          this.empadronada = "EMPADRONADA";
-        } else {
-          this.empadronada = "NO_EMPADRONADA";
-        }
-      });
-  }
+  const dni = this.form.get('dni')?.value?.toString().trim();
+  if (!dni) return;
+
+  this.errorMsg = '';
+  this.successMsg = '';
+  this.cargandoBuscar = true;
+
+  this.regServ.buscar(dni).subscribe({
+    next: ({ padron, usuario }) => {
+      this.pers = padron || null;
+
+      if (usuario) {          // ya existe cuenta con ese DNI
+        this.empadronada = '';
+        this.errorMsg = 'Ya existe una cuenta con ese DNI.';
+        return;
+      }
+
+      this.empadronada = padron ? 'EMPADRONADA' : 'NO_EMPADRONADA';
+    },
+    error: () => this.errorMsg = 'No se pudo buscar el DNI.',
+    complete: () => this.cargandoBuscar = false
+  });
+}
+
+  
 
   guardar() {
   this.errorMsg = '';
@@ -100,102 +149,49 @@ export class RegistroComponent {
   this.cargando = true;
 
   const esEmpadronada = this.empadronada !== 'NO_EMPADRONADA';
+  const rolId = this.form.get('rolId')?.value;
+   const deportista = 2;
+  const tecnico    = 3;
 
-  const datos = {
-    nombre: esEmpadronada ? this.pers?.apellidoYNombre : this.form.get('nombre')?.value,
-    edad: esEmpadronada ? 14 : this.form.get('edad')?.value,
-    email: this.form.get('email')?.value,
-    password: this.form.get('password')?.value,
-    dni: esEmpadronada ? this.pers?.documentoN : this.form.get('dni')?.value,
-    rolId: this.form.get('rolId')?.value
+  const payload: any = {
+    nombre:  esEmpadronada ? this.pers?.apellidoYNombre : this.form.get('nombre')?.value,
+    edad:    esEmpadronada ? 14 : this.form.get('edad')?.value,   // poné la lógica real si aplica
+    email:   this.form.get('email')?.value,
+    password:this.form.get('password')?.value,
+    dni:     esEmpadronada ? this.pers?.documentoN : this.form.get('dni')?.value,
+    rolId
   };
 
-  console.log('Datos a enviar en registro:', datos);
+  // Campos condicionales por rol
+  if (rolId === deportista) payload.categoria = this.form.get('categoria')?.value;
+  if (rolId === tecnico)    payload.nivel     = this.form.get('nivel')?.value;
 
-  this.regServ.guardar(
-    datos.nombre,
-    datos.edad,
-    datos.email,
-    datos.password,
-    datos.dni,
-    datos.rolId
-  ).subscribe({
-    next: (res) => {
-      this.successMsg = 'Registro exitoso. Serás redirigido al login.';
-      this.cargando = false;
+  // (Opcional) validación simple de pass
+  if (this.form.get('password')?.value !== this.form.get('confirmPass')?.value) {
+    this.cargando = false;
+    this.errorMsg = 'Las contraseñas no coinciden.';
+    return;
+  }
 
-      setTimeout(() => {
-        this.successMsg = '';
-        this.router.navigate(['']); 
-      }, 2000);
-    },
-    error: (e) => {
-      this.cargando = false;
-      const mensaje = e?.error?.error || 'Ocurrió un error al registrar.';
-      this.errorMsg = mensaje;
-      console.error(mensaje);
-
-      setTimeout(() => {
-        this.errorMsg = '';
-      }, 3000);
-    }
-  });
-}
-
-
-
-
-  /*guardar() {
-    if (this.empadronada == "NO_EMPADRONADA") {
-      this.regServ.guardar(
-        this.form?.get('nombre')?.value,
-        this.form?.get('edad')?.value,
-        this.form?.get('nivel')?.value,
-        this.form?.get('email')?.value,
-        this.form?.get('password')?.value,
-        this.pers?.documentoN || this.form?.get('dni')?.value,
-        this.form?.get('rolId')?.value
-      ).subscribe({
-        next: (res) => {
-          // token
-          //this.router.navigate(['dashboard-deport']);
-          // llamar a un metodo del servicio que guarde el token en localstorage
-          console.log(res);
-          this.router.navigate(['dashboard-deport']);
-        },
-        error: (e) => {
-          //mostrar mensaje de error sacandolo de error
-          console.log(e.error.error);
-        }
-      });
-    }
-    else {
-      this.regServ.guardar(
-        this.pers.apellidoYNombre,
-        14,
-        this.pers.categoria,
-        this.form?.get('email')?.value,
-        this.form?.get('password')?.value,
-        this.pers?.documentoN || this.form?.get('dni')?.value,
-        this.form?.get('rolId')?.value
-      ).subscribe({
-        next: (res) => {
-          // token
-          //this.router.navigate(['dashboard-deport']);
-          // llamar a un metodo del servicio que guarde el token en localstorage
-          console.log(res);
-          this.router.navigate(['dashboard-deport']);
-        },
-        error: (e) => {
-          //mostrar mensaje de error sacandolo de error
-          console.log(e.error.error);
-        }
-      });
-    }
-  }*/
-
+  this.regServ.guardar(payload)
+    .pipe(finalize(() => this.cargando = false))
+    .subscribe({
+      next: () => {
+        this.successMsg = 'Registro exitoso. Serás redirigido al login.';
+        setTimeout(() => {
+          this.successMsg = '';
+          this.router.navigate(['']);
+        }, 2000);
+      },
+      error: (e) => {
+        
+        this.errorMsg = e?.error?.message || e?.error?.error || 'Ocurrió un error al registrar.';
+      }
+    });
+  }
 
 
 
 }
+  
 

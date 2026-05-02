@@ -29,6 +29,8 @@ import { DocumentacionComponent } from '../documentacion/documentacion.component
 import { Deportist } from '../../interfaces/deportist';
 import { Usuario } from '../../interfaces/usuario';
 import { AuthService } from '../../services/auth.service';
+import { CertificadoService } from '../../services/certificado.service';
+import { firstValueFrom } from 'rxjs';
 
 
 
@@ -90,12 +92,21 @@ export class DashboardDeportComponent implements OnInit {
   public nombre: string = '';
   public club: string = '';
   public categoria: string = '';
+  public canUseApp: boolean = true; // o false, como prefieras por defecto
+
   public fotoPerfilUrl: string = 'assets/img/default-profile.jpg';
 
   private regServ = inject(RegistroService);
   private authService = inject(AuthService);
   private eventServ = inject(EventosService);
+  private certServ = inject(CertificadoService);
   readonly snackBar = inject(MatSnackBar);
+  private aplicarUsuarioEnHeader(u: any) {
+    this.nombre = u?.nombre || '';
+    this.club = u?.padron?.club || u?.club || '';
+    this.categoria = u?.padron?.categoria || u?.categoria || '';
+    this.fotoPerfilUrl = u?.fotoPerfil || 'assets/img/default-profile.jpg';
+  }
 
   ngOnInit() {
     const usuario = this.authService.getUsuario();
@@ -103,7 +114,33 @@ export class DashboardDeportComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    this.aplicarUsuarioEnHeader(usuario);
+
+    // Gate MVP: si no está aprobado, mostramos un dashboard básico
+    this.canUseApp = this.isUsuarioAprobado(usuario);
+
+
+
+    // Me suscribo a cambios (foto, nombre...)
+    this.authService.user$?.subscribe(u => {
+      if (u) {
+        this.aplicarUsuarioEnHeader(u);
+        this.cdr.markForCheck();
+      }
+    });
     this.mostrarMisDatos();
+
+    if (this.canUseApp) {
+      this.mostrarEventos();
+      this.mostrarEventosInscriptos();
+    }
+  }
+
+  private isUsuarioAprobado(usuario: any): boolean {
+    return usuario?.estado === 'aprobado'
+      || usuario?.aprobado === true
+      || usuario?.aprobado === 1
+      || usuario?.aprobado === '1';
   }
 
 
@@ -132,30 +169,42 @@ export class DashboardDeportComponent implements OnInit {
       : 'assets/img/default-profile.jpg';
 
     this.depServ.getDeportistByDni(usuario.dni).subscribe({
-      next: (padron: Deportist[]) => {
-        if (padron.length > 0) {
-          this.pers.padronReferencia = padron[0];
-          console.log('Encontrado en padrón:', padron[0]);
+      next: (res: any) => {
+        const padron = Array.isArray(res)
+          ? res.find((x: any) => String(x.documentoN) === String(usuario.dni))
+          : res;
+
+        if (padron) {
+          this.pers.padronReferencia = padron;
+          this.club = padron.club || this.club;
+          this.categoria = padron.categoria || this.categoria;
+          console.log('Encontrado en padrón:', padron);
         } else {
           console.warn('Este usuario no está empadronado');
         }
 
-        this.mostrarEventos();
-        this.mostrarEventosInscriptos();
+        this.cdr.markForCheck();
       },
-      error: (err) => {
-        console.error('Error al consultar padrón:', err);
-      }
+      error: (err) => console.error('Error al consultar padrón:', err)
     });
+  }
+
+  irAScannerDesdeDashboard(ev: Evento) {
+    if (!ev) return;
+
+    this.router.navigate(
+      ['/asistencias/scanner'],
+      { queryParams: { eventoId: ev.id } }
+    );
   }
 
   mostrarEventos(): void {
     this.eventServ.getEventos().subscribe({
       next: (eventos: Evento[]) => {
-        this.dataSource = new MatTableDataSource(eventos);
-        this.eventosDisponibles = [...(eventos ?? [])];
+        this.eventosDisponibles = eventos ?? [];
+        this.dataSource = new MatTableDataSource(this.eventosDisponibles);
         this.cdr.markForCheck();
-        console.log('Eventos disponibles:', eventos);
+        console.log('Eventos disponibles:', this.eventosDisponibles);
       },
       error: err => {
         console.error('Error al obtener eventos:', err);
@@ -165,11 +214,22 @@ export class DashboardDeportComponent implements OnInit {
     });
   }
 
+
+
   get mostrarEventosEnDashboard(): boolean {
-  return !this.router.url.includes('/mis-datos');
-}
+    const path = this.router.url.split('?')[0].replace(/\/+$/, '');
+    return path === '/dashboard-deport';
+  }
+
   get mostrarMisDatosEnDashboard(): boolean {
     return this.router.url.includes('/mis-datos');
+  }
+
+  get mostrarBackInToolbar(): boolean {
+    const path = this.router.url.split('?')[0];
+    // Mostrar flecha en subrutas del dashboard (mis-datos / mis-eventos)
+    return path.startsWith('/dashboard-deport/mis-datos')
+      || path.startsWith('/dashboard-deport/mis-eventos');
   }
 
   mostrarEventosInscriptos(): void {
@@ -291,47 +351,15 @@ export class DashboardDeportComponent implements OnInit {
     this.router.navigate(['/dashboard-deport']);
   }
 
-  /*mostrarMisDatos(): void {
-    const usuario = this.authService?.loggedUser;
 
-    if (!usuario || !usuario.dni) {
-      console.warn('No se encontraron datos válidos del usuario logueado.');
-      return;
-    }
+  logout() { this.authService.logout(); }
 
-    usuario.club = usuario?.padron?.club || '';
-    usuario.categoria = usuario?.padron?.categoria || '';
+  descargarCert(e: Evento) {
+    // luego lo conectamos al certService
+    console.log('Descargar certificado para', e);
+  }
 
-    if (!usuario || !usuario.dni) {
-      console.warn('No se encontraron datos válidos del usuario logueado.');
-      return;
-    }
 
-    // Guardamos datos del usuario logueado en this.pers
-    this.pers = { ...usuario };
-    this.pers.fotoPerfilUrl = usuario.fotoPerfil
-      ? `http://localhost:3000/${usuario.fotoPerfil}`
-      : 'assets/img/default-profile.jpg';
 
-    // Consultamos el padrón SOLO para comparar o complementar
-    this.depServ.getDeportistByDni(usuario.dni).subscribe({
-      next: (padron: Deportist[]) => {
-        if (padron.length > 0) {
-          const datosPadron = padron[0];
-          console.log('Encontrado en padrón:', datosPadron);
-          this.pers.padronReferencia = datosPadron;
-
-        } else {
-          console.warn('Este usuario no está empadronado');
-        }
-
-        this.mostrarEventos();
-        this.mostrarEventosInscriptos();
-      },
-      error: (err) => {
-        console.error('Error al consultar padrón:', err);
-      }
-    });
-  }*/
 
 }
