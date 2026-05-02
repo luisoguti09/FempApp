@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
 import { Observable, of } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { PerfilEditable } from '../interfaces/PerfilEditable';
@@ -18,7 +18,7 @@ const ROLE_BY_ID: Record<number, RolNombre> = {
 @Injectable({
   providedIn: 'root'
 })
-export class AuthService { 
+export class AuthService {
   private apiURL = environment.SERVER_API;
   private http = inject(HttpClient);
   private router = inject(Router);
@@ -70,7 +70,11 @@ export class AuthService {
         }
       }),
       catchError(err => {
-        console.error('Error en login', err);
+        console.error('Error en login completo:', err);
+        console.error('Status:', err?.status);
+        console.error('Message:', err?.message);
+        console.error('URL:', err?.url);
+        console.error('Error body:', err?.error);
         return of(null);
       })
     );

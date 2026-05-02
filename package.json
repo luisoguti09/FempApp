@@ -23,6 +23,7 @@
     "@angular/pwa": "^0.5.3",
     "@angular/router": "^18.2.0",
     "@angular/service-worker": "^18.2.8",
+    "@capacitor/android": "^6.2.1",
     "@capacitor/cli": "^6.2.1",
     "@capacitor/core": "^6.2.1",
     "@material/card": "^14.0.0",
