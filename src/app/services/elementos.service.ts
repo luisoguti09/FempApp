@@ -24,7 +24,7 @@ export class ElementosService {
   }
 
   crearElemento(data: any) {
-    return this.http.post<any>(this.apiUrl, data);
+    return this.http.post<any>(`${this.apiUrl}/elementos`, data);
   }
 
 }

@@ -13,10 +13,10 @@ export class ComponentesService {
 
 
   getComponentes(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl + '/componentes');
+    return this.http.get<any[]>(`${this.apiUrl}/componentes`);
   }
 
   crearComponente(data: any) {
-  return this.http.post<any>(this.apiUrl, data);
+  return this.http.post<any>(`${this.apiUrl}/componentes`, data);
 }
 }
