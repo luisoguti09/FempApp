@@ -159,13 +159,15 @@ export class DashboardDeportComponent implements OnInit {
     this.fotoPerfilUrl = usuario.fotoPerfil
       ? (usuario.fotoPerfil.startsWith('http')
         ? usuario.fotoPerfil
-        : `http://localhost:3000/${usuario.fotoPerfil}`)
+        : `http://nodejs-production-ea14.up.railway.app/${usuario.fotoPerfil}`)
+        //: `http://localhost:3000/${usuario.fotoPerfil}`)
       : 'assets/img/default-profile.jpg';
     usuario.club = usuario?.padron?.club || '';
     usuario.categoria = usuario?.padron?.categoria || '';
     this.pers = { ...usuario };
     this.pers.fotoPerfilUrl = usuario.fotoPerfil
-      ? `http://localhost:3000/${usuario.fotoPerfil}`
+      ?`http://nodejs-production-ea14.up.railway.app/${usuario.fotoPerfil}`
+      //? `http://localhost:3000/${usuario.fotoPerfil}`
       : 'assets/img/default-profile.jpg';
 
     this.depServ.getDeportistByDni(usuario.dni).subscribe({

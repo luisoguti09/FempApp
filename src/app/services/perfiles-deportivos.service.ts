@@ -11,7 +11,8 @@ import {
 })
 export class PerfilesDeportivosService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:3000/perfiles-deportivos';
+  private apiUrl = 'http://nodejs-production-ea14.up.railway.app/perfiles-deportivos';
+  //private apiUrl = 'http://localhost:3000/perfiles-deportivos';
 
   getByUsuario(usuarioId: number): Observable<PerfilDeportivo[]> {
     return this.http.get<PerfilDeportivo[]>(`${this.apiUrl}/usuario/${usuarioId}`);
