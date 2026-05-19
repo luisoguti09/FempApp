@@ -62,7 +62,7 @@
                 Registrar observaciones técnicas, evolución por perfil deportivo,
                 elementos y componentes.
             </p>
-            <button type="button" mat-raised-button color="primary" (click)="abrirModulo('evaluacion')">
+            <button type="button" mat-raised-button color="primary" (click)="abrirNuevaEvaluacion()">
                 Nueva evaluación
             </button>
         </mat-card>
@@ -159,11 +159,34 @@
                 <textarea matInput formControlName="observacion"></textarea>
             </mat-form-field>
 
-            <button mat-raised-button color="primary" type="button" (click)="guardarEvaluacion()">
-                Guardar Evaluación
+            <button mat-raised-button color="primary" type="button" *ngIf="estadoEvaluacion !== 'guardada'"
+                (click)="guardarEvaluacion()">
+                Guardar evaluación
             </button>
 
         </form>
+
+        <div class="acciones-evaluacion" *ngIf="estadoEvaluacion === 'guardada'">
+            <mat-card class="evaluacion-guardada-card">
+                <mat-card-title>Evaluación guardada</mat-card-title>
+
+                <mat-card-content>
+                    <p>La evaluación fue registrada correctamente.</p>
+                    <p>Podés revisarla, editarla o iniciar una nueva evaluación.</p>
+                </mat-card-content>
+
+                <mat-card-actions>
+                    <button mat-raised-button color="primary" type="button" (click)="nuevaEvaluacion()">
+                        Nueva evaluación
+                    </button>
+
+                    <button mat-stroked-button color="accent" type="button" (click)="editarEvaluacionActual()">
+                        Editar esta evaluación
+                    </button>
+                </mat-card-actions>
+            </mat-card>
+        </div>
+
     </mat-card>
 
     <section *ngIf="mostrarModulo() === 'deportistas'" class="modulo-panel">
