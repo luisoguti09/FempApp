@@ -15,6 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { finalize } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatIcon } from '@angular/material/icon';
 
 
 @Component({
@@ -34,7 +35,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     MatDividerModule,
     RegistroFastComponent,
     MatSelectModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatIcon
   ],
   templateUrl: './registro.component.html',
   styleUrl: './registro.component.scss'
